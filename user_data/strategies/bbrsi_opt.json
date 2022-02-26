@@ -1,0 +1,33 @@
+{
+  "strategy_name": "BBRSIOPT",
+  "params": {
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "buy": {
+      "buy_bb": "bb_l15",
+      "buy_rsi": 44,
+      "buy_rsi_enabled": true
+    },
+    "sell": {
+      "sell_bb": "bb_u2",
+      "sell_rsi": 98,
+      "sell_rsi_enabled": false
+    },
+    "protection": {},
+    "roi": {
+      "0": 0.4,
+      "181": 0.067,
+      "763": 0.035,
+      "1564": 0
+    },
+    "stoploss": {
+      "stoploss": -0.333
+    }
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2022-02-19 09:53:59.999996+00:00"
+}
