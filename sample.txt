@@ -1,0 +1,4 @@
+Name|Phone
+Jack;589633
+John;845792
+Ellie;075674
