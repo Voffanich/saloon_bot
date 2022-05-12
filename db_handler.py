@@ -44,7 +44,7 @@ class DB_handler():
         
         query = f"""
         INSERT INTO clients (user_name, user_id, name, last_name, phone_number, visits_counter)
-        VALUES ({user_name}, {user_id}, {name}, {last_name}, {phone_number}, {visits_counter});        
+        VALUES ('{user_name}', {user_id}, '{name}', '{last_name}', '{phone_number}', {visits_counter});        
         """
         self.cursor.execute(query)
         self.connection.commit
