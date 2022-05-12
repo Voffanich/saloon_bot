@@ -17,26 +17,30 @@ class DB_handler():
             visits_counter INT);
             """
         self.cursor.execute(query)
-        self.connection.commit
+        self.connection.commit()
         
         query = """CREATE TABLE IF NOT EXISTS visits (
-            user_name TEXT PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_name TEXT,
             date TEXT,
-            time TEXT
+            time TEXT,
             procedure TEXT);
             """
         self.cursor.execute(query)
-        self.connection.commit
+        self.connection.commit()
     
     def add_client(self, user_name: str, name: str = '', last_name: str = '', phone_number: str = ''):
         visits_counter = 0
+        user_id = 0
+        # определение максимального айдишника и назначение следующего айдишника
         query = "SELECT MAX(user_id) FROM clients"
         self.cursor.execute(query)
-        user_id = self.cursor.fetchone()
-        self.connection.commit
+        max_id = self.cursor.fetchone()
+        print(max_id[0])
+        self.connection.commit()
         
-        if type(user_id) == int:
-            user_id += 1
+        if type(max_id[0]) == int:
+            user_id = max_id[0] + 1
         else:
             user_id = 1
         
@@ -47,9 +51,10 @@ class DB_handler():
         VALUES ('{user_name}', {user_id}, '{name}', '{last_name}', '{phone_number}', {visits_counter});        
         """
         self.cursor.execute(query)
-        self.connection.commit
+        self.connection.commit()
+        
     
-    def add_visit(self, client: str, date: str, time: str, procedure: str):
+    def add_visit(self, user_name: str, date: str, time: str, procedure: str):
         query = f"""
         
         """
