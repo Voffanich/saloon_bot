@@ -1,6 +1,7 @@
 import telebot
 from telebot import types
 from credentials import apikey
+import db_handler as dbh
 
 bot = telebot.TeleBot(apikey)
 
@@ -21,6 +22,10 @@ def func(message):
         bot.send_message(message.chat.id, text='1. Записаться на процедуру\n2. Посмотреть дату и время записи\n3. Настроить напоминания о визите\n4. Перенести визит\n')
     elif (message.text == 'Записаться'):
         bot.send_message(message.chat.id, text='Такс, смотри на свободные окошки')
+    elif (message.text == 'Перенести визит'):
+        bot.send_message(message.chat.id, text='Ну, начинается!')
+    elif (message.text == 'Проверить запись'):
+        bot.send_message(message.chat.id, text='Вы записаны тогда-то на столько-то')
     else:
         bot.send_message(message.chat.id, text='К такому меня жизнь не готовила) Напиши что-нибудь адекватное')
 
