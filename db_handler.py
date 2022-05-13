@@ -1,62 +1,82 @@
+from http import client
 import sqlite3
 
 class DB_handler():
     
     def __init__(self, dbname='saloon.sqlite'):
         self.dbname = dbname
-        self.connection = sqlite3.connect(dbname)
+        self.connection = sqlite3.connect(dbname, check_same_thread=False)
         self.cursor = self.connection.cursor()
         
     def setup(self):
         query = """CREATE TABLE IF NOT EXISTS clients (
-            user_name TEXT PRIMARY KEY,
-            user_id INT,
+            client_name TEXT PRIMARY KEY,
+            client_id INT,
             name TEXT,
             last_name TEXT,
             phone_number TEXT,
-            visits_counter INT);
+            visits_counter INT,
+            timing TEXT,
+            last_visit TEXT,
+            active TEXT,
+            discount INT);
             """
         self.cursor.execute(query)
         self.connection.commit()
         
         query = """CREATE TABLE IF NOT EXISTS visits (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_name TEXT,
+            client_name TEXT,
             date TEXT,
-            time TEXT,
-            procedure TEXT);
+            start_time TEXT,
+            finish_time TEXT,
+            procedure TEXT,
+            price INT,
+            status TEXT);
             """
         self.cursor.execute(query)
         self.connection.commit()
     
-    def add_client(self, user_name: str, name: str = '', last_name: str = '', phone_number: str = ''):
+    def add_client(self, client_name: str, name: str = '', last_name: str = '', phone_number: str = '', timing: str = '2:30', last_visit: str = '', active: str = 'true', discount: int = 0):
         visits_counter = 0
-        user_id = 0
+        client_id = 0
         # определение максимального айдишника и назначение следующего айдишника
-        query = "SELECT MAX(user_id) FROM clients"
+        query = "SELECT MAX(client_id) FROM clients"
         self.cursor.execute(query)
         max_id = self.cursor.fetchone()
-        print(max_id[0])
+        #print(max_id[0])
         self.connection.commit()
         
         if type(max_id[0]) == int:
-            user_id = max_id[0] + 1
+            client_id = max_id[0] + 1
         else:
-            user_id = 1
+            client_id = 1
         
-        print(user_id)
+        #print(client_id)
         
         query = f"""
-        INSERT INTO clients (user_name, user_id, name, last_name, phone_number, visits_counter)
-        VALUES ('{user_name}', {user_id}, '{name}', '{last_name}', '{phone_number}', {visits_counter});        
+        INSERT INTO clients (client_name, client_id, name, last_name, phone_number, visits_counter, timing, last_visit, active, discount)
+        VALUES ('{client_name}', {client_id}, '{name}', '{last_name}', '{phone_number}', {visits_counter}, '{timing}', '{last_visit}', '{active}', '{discount}');        
         """
         self.cursor.execute(query)
         self.connection.commit()
         
     
-    def add_visit(self, user_name: str, date: str, time: str, procedure: str):
+    def add_visit(self, client_name: str, date: str, start_time: str, finish_time: str, procedure: str, status: str, price: int = 35):
         query = f"""
-        
+        INSERT INTO visits (id, client_name, date, start_time, finish_time, procedure, price, status)
+        VALUES ('{client_name}', {date}, '{start_time}', '{finish_time}', '{procedure}', {status}, {price}'); 
         """
         self.cursor.execute(query)
         self.connection.commit
+    
+    def client_exists(self, client_name: str):
+       
+        reply = self.cursor.execute("SELECT client_name FROM clients WHERE client_name = ?", (client_name,))
+        self.connection.commit
+        
+        if reply.fetchone() is None:
+            return False
+        else:
+            return True
+        
