@@ -1,5 +1,7 @@
 from http import client
 import sqlite3
+from typing import List
+from xmlrpc.client import Boolean
 
 class DB_handler():
     
@@ -7,6 +9,7 @@ class DB_handler():
         self.dbname = dbname
         self.connection = sqlite3.connect(dbname, check_same_thread=False)
         self.cursor = self.connection.cursor()
+        self.flag = ''
         
     def setup(self):
         query = """CREATE TABLE IF NOT EXISTS clients (
@@ -70,7 +73,7 @@ class DB_handler():
         self.cursor.execute(query)
         self.connection.commit
     
-    def client_exists(self, client_name: str):
+    def client_exists(self, client_name: str) -> Boolean:
        
         reply = self.cursor.execute("SELECT client_name FROM clients WHERE client_name = ?", (client_name,))
         self.connection.commit
@@ -80,3 +83,17 @@ class DB_handler():
         else:
             return True
         
+    def clients_list(self) -> List:
+        clients_list = []
+        
+        query = f"""
+        SELECT client_name FROM clients        
+        """
+        self.cursor.execute(query)
+        records = self.cursor.fetchall()
+        self.connection.commit()
+        
+        for row in records:
+            clients_list.append(row[0])
+        
+        return clients_list
