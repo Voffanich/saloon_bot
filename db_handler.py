@@ -1,4 +1,3 @@
-from http import client
 import sqlite3
 from typing import List
 from xmlrpc.client import Boolean
@@ -13,8 +12,8 @@ class DB_handler():
         
     def setup(self):
         query = """CREATE TABLE IF NOT EXISTS clients (
-            client_name TEXT PRIMARY KEY,
-            client_id INT,
+            client_id INT PRIMARY KEY,
+            user_name TEXT,
             name TEXT,
             last_name TEXT,
             phone_number TEXT,
@@ -40,31 +39,17 @@ class DB_handler():
         self.cursor.execute(query)
         self.connection.commit()
     
-    def add_client(self, client_name: str, name: str = '', last_name: str = '', phone_number: str = '', timing: str = '2:30', last_visit: str = '', active: str = 'true', discount: int = 0):
+    def add_client(self, client_id: str, user_name: str, name: str = '', last_name: str = '', phone_number: str = '', timing: str = '2:30', last_visit: str = '', active: str = 'true', discount: int = 0):
         visits_counter = 0
-        client_id = 0
-        # определение максимального айдишника и назначение следующего айдишника
-        query = "SELECT MAX(client_id) FROM clients"
-        self.cursor.execute(query)
-        max_id = self.cursor.fetchone()
-        #print(max_id[0])
-        self.connection.commit()
-        
-        if type(max_id[0]) == int:
-            client_id = max_id[0] + 1
-        else:
-            client_id = 1
-        
-        #print(client_id)
         
         query = f"""
-        INSERT INTO clients (client_name, client_id, name, last_name, phone_number, visits_counter, timing, last_visit, active, discount)
-        VALUES ('{client_name}', {client_id}, '{name}', '{last_name}', '{phone_number}', {visits_counter}, '{timing}', '{last_visit}', '{active}', '{discount}');        
+        INSERT INTO clients (client_id, user_name, name, last_name, phone_number, visits_counter, timing, last_visit, active, discount)
+        VALUES ('{client_id}', '{user_name}', '{name}', '{last_name}', '{phone_number}', {visits_counter}, '{timing}', '{last_visit}', '{active}', '{discount}');        
         """
         self.cursor.execute(query)
         self.connection.commit()
         
-    
+    # ПЕРЕСМОТРЕТЬ ИМЕНА СТОЛБЦОВ
     def add_visit(self, client_name: str, date: str, start_time: str, finish_time: str, procedure: str, status: str, price: int = 35):
         query = f"""
         INSERT INTO visits (id, client_name, date, start_time, finish_time, procedure, price, status)
@@ -73,9 +58,9 @@ class DB_handler():
         self.cursor.execute(query)
         self.connection.commit
     
-    def client_exists(self, client_name: str) -> Boolean:
+    def client_exists(self, user_name: str) -> Boolean:
        
-        reply = self.cursor.execute("SELECT client_name FROM clients WHERE client_name = ?", (client_name,))
+        reply = self.cursor.execute("SELECT user_name FROM clients WHERE user_name = ?", (user_name,))
         self.connection.commit
         
         if reply.fetchone() is None:
