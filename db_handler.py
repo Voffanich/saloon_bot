@@ -13,8 +13,8 @@ class DB_handler():
     def setup(self):
         query = """CREATE TABLE IF NOT EXISTS clients (
             client_id INT PRIMARY KEY,
-            user_name TEXT,
-            name TEXT,
+            username TEXT,
+            first_name TEXT,
             last_name TEXT,
             phone_number TEXT,
             visits_counter INT,
@@ -38,13 +38,29 @@ class DB_handler():
             """
         self.cursor.execute(query)
         self.connection.commit()
-    
-    def add_client(self, client_id: str, user_name: str, name: str = '', last_name: str = '', phone_number: str = '', timing: str = '2:30', last_visit: str = '', active: str = 'true', discount: int = 0):
+        
+        query = """CREATE TABLE IF NOT EXISTS procedures (
+            procedure INTEGER PRIMARY KEY AUTOINCREMENT,
+            duration TEXT,
+            price TEXT,
+            monday_shedule TEXT,
+            tuesday_shedule TEXT,
+            wednesday_shedule TEXT,
+            thursday_shedule TEXT,
+            friday_shedule TEXT,
+            saturday_shedule TEXT,
+            sunday_shedule TEXT);
+            """
+        self.cursor.execute(query)
+        self.connection.commit()
+        
+    def add_client(self, client_id: str, username: str, first_name: str = '', last_name: str = '', phone_number: str = '', timing: str = '2:30', last_visit: str = '', active: str = 'true', discount: int = 0):
         visits_counter = 0
+        timing = '2:30'
         
         query = f"""
-        INSERT INTO clients (client_id, user_name, name, last_name, phone_number, visits_counter, timing, last_visit, active, discount)
-        VALUES ('{client_id}', '{user_name}', '{name}', '{last_name}', '{phone_number}', {visits_counter}, '{timing}', '{last_visit}', '{active}', '{discount}');        
+        INSERT INTO clients (client_id, username, first_name, last_name, phone_number, visits_counter, timing, last_visit, active, discount)
+        VALUES ('{client_id}', '{username}', '{first_name}', '{last_name}', '{phone_number}', {visits_counter}, '{timing}', '{last_visit}', '{active}', '{discount}');        
         """
         self.cursor.execute(query)
         self.connection.commit()
@@ -58,9 +74,9 @@ class DB_handler():
         self.cursor.execute(query)
         self.connection.commit
     
-    def client_exists(self, user_name: str) -> Boolean:
+    def client_exists(self, username: str) -> Boolean:
        
-        reply = self.cursor.execute("SELECT user_name FROM clients WHERE user_name = ?", (user_name,))
+        reply = self.cursor.execute("SELECT username FROM clients WHERE username = ?", (username,))
         self.connection.commit
         
         if reply.fetchone() is None:
