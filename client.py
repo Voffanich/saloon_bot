@@ -1,7 +1,7 @@
 from unicodedata import name
 
 
-class Clients():
+class Client():
     
     def __init__(self, id: str = '', username: str = '', first_name: str = '', last_name: str = '', timing: str = '2:30',phone_number: str = ''):
         self.client_id = id

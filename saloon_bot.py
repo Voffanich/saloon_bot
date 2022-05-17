@@ -1,16 +1,15 @@
 import telebot
 from telebot import types
 from credentials import apikey, admin_usernames
-from db_handler import DB_handler
 import bot_funcs as bf
-from clients import Clients
+from client import Client
+from db_handler import db
 import keyboards as kb
 
 bot = telebot.TeleBot(apikey)
 
 client_objects = []
-db = DB_handler()
-client = Clients()
+client = Client()
 
 """# список клиентов из базы
 clients_list = db.clients_list()

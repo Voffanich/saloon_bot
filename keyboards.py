@@ -1,11 +1,11 @@
 from telebot import types
 import bot_funcs as bf
-from db_handler import DB_handler as db
+from db_handler import db
 
 
 # клавиатура выбора процедур
 procedures_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-procedures = bf.get_procedures()
+procedures = db.clients_list()
 procedures.append('Главное меню')
 btns = [types.KeyboardButton(procedure) for procedure in procedures]
 procedures_keyboard.add(*btns)

@@ -2,6 +2,7 @@ import sqlite3
 from typing import List
 from xmlrpc.client import Boolean
 
+
 class DB_handler():
     
     def __init__(self, dbname='saloon.sqlite'):
@@ -99,7 +100,7 @@ class DB_handler():
         
         return clients_list
     
-    @staticmethod  
+     
     def get_procedures(self) -> List:
         procedures = []
         
@@ -114,3 +115,6 @@ class DB_handler():
             procedures.append(row[0])
             
         return procedures
+    
+    
+db = DB_handler()
