@@ -134,6 +134,7 @@ def func(message):
         else:
             bot.send_message(message.chat.id, text='К такому меня жизнь не готовила) Если что-то не получается, пользуйтесь, пожалуйста, кнопками меню бота', reply_markup=kb.main_keyboard)
     
+    
     elif (message.text == 'admino stop' or message.text == 'stop admino' or message.text == 'админо стоп' or message.text == 'стоп админо'):
         client.admin = False      
         bot.send_message(message.chat.id, text='admin mode off', reply_markup=kb.main_keyboard)

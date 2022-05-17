@@ -1,5 +1,6 @@
 from telebot import types
 import bot_funcs as bf
+from db_handler import DB_handler as db
 
 
 # клавиатура выбора процедур

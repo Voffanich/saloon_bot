@@ -40,7 +40,7 @@ class DB_handler():
         self.connection.commit()
         
         query = """CREATE TABLE IF NOT EXISTS procedures (
-            procedure INTEGER PRIMARY KEY AUTOINCREMENT,
+            procedure TEXT PRIMARY KEY,
             duration TEXT,
             price TEXT,
             monday_shedule TEXT,
@@ -88,7 +88,7 @@ class DB_handler():
         clients_list = []
         
         query = f"""
-        SELECT client_name FROM clients        
+        SELECT username FROM clients        
         """
         self.cursor.execute(query)
         records = self.cursor.fetchall()
@@ -98,3 +98,19 @@ class DB_handler():
             clients_list.append(row[0])
         
         return clients_list
+    
+    @staticmethod  
+    def get_procedures(self) -> List:
+        procedures = []
+        
+        query = f"""
+        SELECT procedure FROM procedures
+        """
+        self.cursor.execute(query)
+        records = self.cursor.fetchall()
+        self.connection.commit()
+        
+        for row in records:
+            procedures.append(row[0])
+            
+        return procedures

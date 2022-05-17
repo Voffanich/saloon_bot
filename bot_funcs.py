@@ -25,7 +25,8 @@ def validate_name(name: str) -> List [Boolean]:
         return [True, first_name, last_name]
     else:
         return [False, None, None]
-    
+
+  
 def get_procedures() -> List[Str]:
     cols = [0]
     procedures_list = []
