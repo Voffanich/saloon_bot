@@ -4,8 +4,7 @@ from credentials import apikey, admin_usernames
 from db_handler import DB_handler
 import bot_funcs as bf
 from clients import Clients
-import re
-import string
+import keyboards as kb
 
 bot = telebot.TeleBot(apikey)
 
@@ -20,47 +19,18 @@ clients_list = db.clients_list()
 for client in clients_list:
     client_objects.append(Clients(client))"""
 
-# клавиатура выбора процедур
-procedures_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-procedures = ['Маникюр', 'Педикюр', 'Ламинирование ресниц']
-for procedure in procedures:
-    procedures_keyboard.add(types.KeyboardButton(procedure))
-
-# клавиатура админа
-admin_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)   
-btn1 = types.KeyboardButton("Посмотреть записи")
-btn2 = types.KeyboardButton("Обновить прайс")
-btn3 = types.KeyboardButton("Скачать шаблон прайса")
-btn4 = types.KeyboardButton("Обновить процедуры")
-btn5 = types.KeyboardButton("Скачать шаблон процедур")
-btn6 = types.KeyboardButton("Скачать файл окошек")
-btn7 = types.KeyboardButton("Посмотреть свободные окна")
-admin_keyboard.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7)
 
 # Обработка команды Start
 @bot.message_handler(commands=['start'])
 def start(message, res=False):
     if client.admin == False:    
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        btn1 = types.KeyboardButton("Что может бот?")
-        btn2 = types.KeyboardButton("Записаться")
-        btn3 = types.KeyboardButton("Перенести/отменить визит")
-        btn4 = types.KeyboardButton("Проверить запись")
-        btn5 = types.KeyboardButton("Настроить напоминания")
-        btn6 = types.KeyboardButton("Прайс")
-        btn7 = types.KeyboardButton("Обо мне")
-        markup.add(btn1, btn2, btn3, btn4, btn5, btn6, btn7)
-        bot.send_message(message.chat.id, text="Дорова! Здесь ты можешь записаться ко мне на процедуры. Жамкай нужные кнопки", reply_markup=markup)
+        bot.send_message(message.chat.id, text="Дорова! Здесь ты можешь записаться ко мне на процедуры. Жамкай нужные кнопки", reply_markup=kb.main_keyboard)
            
 @bot.message_handler(func=lambda _: client.flag == 'проверить телефон')
 def verify_phone_number(message):
-    phone_number = message.text
-    if re.fullmatch(r'[+]?375(29|33|44|25)\d{7}\b', phone_number):
-        
-        if phone_number[0] != "+" and len(phone_number) == 12:
-            phone_number = "+" + phone_number
+    if bf.validate_phone(message.text)[0]:
        
-        client.phone_number = phone_number    
+        client.phone_number = bf.validate_phone(message.text)[1]    
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         btn1 = types.KeyboardButton("Телефон верный")
         btn2 = types.KeyboardButton("Изменить номер телефона")
@@ -72,11 +42,11 @@ def verify_phone_number(message):
 
 @bot.message_handler(func=lambda _: client.flag == 'проверить имя')
 def verify_name(message):
-    if re.fullmatch(r'\b[а-яА-Я]{2,10}\b[ ]\b[а-яА-Я]{2,12}\b', message.text):
+    if bf.validate_name(message.text)[0]:
+        client.first_name = bf.validate_name(message.text)[1]
+        client.last_name = bf.validate_name(message.text)[2]
+        
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        name = string.capwords(message.text).split(' ')
-        client.first_name = name[0]
-        client.last_name = name[1]
         btn1 = types.KeyboardButton("Да, имя верное")
         btn2 = types.KeyboardButton("Изменить имя")
         client.flag = ''
@@ -102,7 +72,7 @@ def func(message):
         client.last_name = message.from_user.last_name
                 
         if db.client_exists(client.username):
-            bot.send_message(message.chat.id, text='Такс, выбрайте процедуру, на которую хотите прийти', reply_markup=procedures_keyboard)
+            bot.send_message(message.chat.id, text='Такс, выбрайте процедуру, на которую хотите прийти', reply_markup=kb.procedures_keyboard)
         else:
             btn1 = types.KeyboardButton("Оставляем")
             btn2 = types.KeyboardButton("Изменить имя")
@@ -147,23 +117,26 @@ def func(message):
     
     
     elif (message.text == 'Да, имя верное'):
-        bot.send_message(message.chat.id, text='Чудненько! Теперь введите ваш номер телефона в формате +375хх без пробелов и дефисов')
+        bot.send_message(message.chat.id, text='Чудненько! Теперь введите ваш номер телефона в формате +375хх без пробелов и дефисов', reply_markup='')
         client.flag = 'проверить телефон'
     
     
     elif (message.text == 'Телефон верный'):
-        bot.send_message(message.chat.id, text=f'Чудненько, сохранили вас в базе клиентов как {client.first_name} {client.last_name}, {client.phone_number}', reply_markup='')
-        db.add_client(message.from_user.id, message.from_user.username, client.first_name, client.last_name, client.phone_number)        
+        bot.send_message(message.chat.id, text=f'Чудненько, сохранили вас в базе клиентов как <b>{client.first_name} {client.last_name}, {client.phone_number}</b>. Теперь можете выбрать процедуру, на которую хотели бы прийти', reply_markup=kb.procedures_keyboard, parse_mode='HTML')
+        db.add_client(message.from_user.id, client.username, client.first_name, client.last_name, client.phone_number)        
         client.flag = 'выбор процедуры'
         
         
     elif (message.text == 'admino' or message.text == 'админо'):                
         if message.from_user.username in admin_usernames:
-            bot.send_message(message.chat.id, text='Привет, админ!', reply_markup=admin_keyboard)
+            bot.send_message(message.chat.id, text='Привет, админ!', reply_markup=kb.admin_keyboard)
             client.admin = True
         else:
-            bot.send_message(message.chat.id, text='К такому меня жизнь не готовила) Если что-то не получается, пользуйтесь, пожалуйста, кнопками меню бота', reply_markup=markup_main_menu)
-           
+            bot.send_message(message.chat.id, text='К такому меня жизнь не готовила) Если что-то не получается, пользуйтесь, пожалуйста, кнопками меню бота', reply_markup=kb.main_keyboard)
+    
+    elif (message.text == 'admino stop' or message.text == 'stop admino' or message.text == 'админо стоп' or message.text == 'стоп админо'):
+        client.admin = False      
+        bot.send_message(message.chat.id, text='admin mode off', reply_markup=kb.main_keyboard)
         
     else:
         bot.send_message(message.chat.id, text='К такому меня жизнь не готовила) Если что-то не получается, пользуйтесь, пожалуйста, кнопками меню бота')
