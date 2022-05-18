@@ -85,7 +85,7 @@ class DB_handler():
         else:
             return True
         
-    def clients_list(self) -> List:
+    def get_clients_list(self) -> List:
         clients_list = []
         
         query = f"""
@@ -116,5 +116,16 @@ class DB_handler():
             
         return procedures
     
-    
+    def get_clients_data(self) -> List:
+               
+        query = f"""
+        SELECT client_id, username, first_name, last_name, phone_number, timing FROM clients
+        """
+        self.cursor.execute(query)
+        client_data = self.cursor.fetchall()
+        self.connection.commit()
+                
+        return client_data
+        
+        
 db = DB_handler()

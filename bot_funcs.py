@@ -1,9 +1,11 @@
 from ast import Str
 import re
 import string
-from typing import List
+from typing import Dict, List
 from xmlrpc.client import Boolean
 import pandas as pd
+from db_handler import db
+from client import Client
 
 
 def validate_phone(phone_number: str) -> List [Boolean]:
@@ -38,5 +40,10 @@ def get_procedures() -> List[Str]:
         
     return procedures_list
 
-
-            
+def create_client_objects() -> Dict:
+    client_objects = {}
+    clients_data = db.get_clients_data()
+    
+    client_objects = {str(row[0]): Client(row[0], row[1], row[2], row[3], row[5], row[4] )for row in clients_data}
+    
+    return client_objects
