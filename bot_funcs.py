@@ -40,7 +40,7 @@ def get_procedures() -> List[Str]:
         
     return procedures_list
 
-def create_client_objects() -> Dict:
+def create_client_objects_from_db() -> Dict:
     client_objects = {}
     clients_data = db.get_clients_data()
     
