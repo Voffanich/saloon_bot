@@ -1,6 +1,7 @@
 import sqlite3
 from typing import List
 from xmlrpc.client import Boolean
+import pandas as pd
 
 
 class DB_handler():
@@ -44,13 +45,13 @@ class DB_handler():
             procedure TEXT PRIMARY KEY,
             duration TEXT,
             price TEXT,
-            monday_shedule TEXT,
-            tuesday_shedule TEXT,
-            wednesday_shedule TEXT,
-            thursday_shedule TEXT,
-            friday_shedule TEXT,
-            saturday_shedule TEXT,
-            sunday_shedule TEXT);
+            mon_sched TEXT,
+            tue_sched TEXT,
+            wed_sched TEXT,
+            thu_sched TEXT,
+            fri_sched TEXT,
+            sat_sched TEXT,
+            sun_sched TEXT);
             """
         self.cursor.execute(query)
         self.connection.commit()
@@ -101,7 +102,7 @@ class DB_handler():
         return clients_list
     
      
-    def get_procedures(self) -> List:
+    def get_procedures_db(self) -> List:
         procedures = []
         
         query = f"""
@@ -126,6 +127,25 @@ class DB_handler():
         self.connection.commit()
                 
         return client_data
+    
+    def update_procedures(self):
+        db_row = []    
+        procedures_df = pd.read_excel('user_data/procedures.xlsx').fillna("0")
+        # print(procedures_df)
+        for i in range(0, len(procedures_df)):
+            for val in procedures_df.iloc[i]:
+                db_row.append(str(val))
+            query = f"""
+            INSERT INTO procedures (procedure, duration, price, mon_sched, tue_sched, wed_sched, thu_sched, fri_sched, sat_sched, sun_sched) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """          
+            self.cursor.execute(query, (db_row[0], db_row[1], db_row[2], db_row[3], db_row[4], db_row[5], db_row[6], db_row[7],db_row[8], db_row[9]))
+            self.connection.commit()  
+            db_row = []
+            
+                
+            
+        
         
         
 db = DB_handler()

@@ -29,7 +29,7 @@ def validate_name(name: str) -> List [Boolean]:
         return [False, None, None]
 
   
-def get_procedures() -> List[Str]:
+def get_procedures_excel() -> List[Str]:
     cols = [0]
     procedures_list = []
     
@@ -44,6 +44,6 @@ def create_client_objects_from_db() -> Dict:
     client_objects = {}
     clients_data = db.get_clients_data()
     
-    client_objects = {str(row[0]): Client(row[0], row[1], row[2], row[3], row[5], row[4] )for row in clients_data}
+    client_objects = {row[0]: Client(row[0], row[1], row[2], row[3], row[5], row[4] )for row in clients_data}
     
     return client_objects

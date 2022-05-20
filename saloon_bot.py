@@ -12,8 +12,6 @@ bot = telebot.TeleBot(apikey)
 
 clients = bf.create_client_objects_from_db()
 
-
-
 """# список клиентов из базы
 clients_list = db.clients_list()
 
@@ -25,9 +23,9 @@ for clients[message.from_user.id] in clients_list:
 # Обработка команды Start
 @bot.message_handler(commands=['start'])
 def start(message, res=False):
-    if clients[message.from_user.id] == NoneType:
+    if message.from_user.id not in clients:
         bot.send_message(message.chat.id, text="Да вы, батенька, впервые тут", reply_markup=kb.main_keyboard)
-        clients[message.from_user.id] = Client(str(message.from_user.id), '', '', '', '', '')
+        clients[message.from_user.id] = Client(message.from_user.id, '', '', '', '', '')
     else:    
         bot.send_message(message.chat.id, text="Дорова! Здесь ты можешь записаться ко мне на процедуры. Жамкай нужные кнопки", reply_markup=kb.main_keyboard)
            

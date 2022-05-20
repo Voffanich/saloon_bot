@@ -5,7 +5,8 @@ from db_handler import db
 
 # клавиатура выбора процедур
 procedures_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-procedures = db.get_procedures()
+# procedures = db.get_procedures_db()
+procedures = db.get_procedures_db()
 procedures.append('Главное меню')
 btns = [types.KeyboardButton(procedure) for procedure in procedures]
 procedures_keyboard.add(*btns)
