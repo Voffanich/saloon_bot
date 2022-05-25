@@ -42,7 +42,8 @@ class DB_handler():
         self.connection.commit()
         
         query = """CREATE TABLE IF NOT EXISTS procedures (
-            procedure TEXT PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            procedure TEXT,
             duration TEXT,
             price TEXT,
             mon_sched TEXT,

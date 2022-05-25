@@ -6,6 +6,7 @@ from xmlrpc.client import Boolean
 import pandas as pd
 from db_handler import db
 from client import Client
+from telebot import types
 
 
 def validate_phone(phone_number: str) -> List [Boolean]:
@@ -47,3 +48,27 @@ def create_client_objects_from_db() -> Dict:
     client_objects = {row[0]: Client(row[0], row[1], row[2], row[3], row[5], row[4] )for row in clients_data}
     
     return client_objects
+
+def create_dates_keyboard(bot, message):
+    days = ['Понедельник, 25 мая', 'Вторник, 26 мая', 'Среда, 27 мая', 'Четверг, 28 мая']
+    dates = {
+        'Пн, 25 мая': ['10:00', '12:00', '18:00'],
+        'Вт, 26 мая': ['12:00', '16:00'],
+        'Ср, 27 мая': ['10:00', '12:00', '14:00', '16:00'],
+        'Чт, 28 мая': ['10:00', '12:00', '14:00', '16:00', '18:00'],
+        'Пт, 29 мая': ['10:00', '16:00'],
+        'Сб, 30 мая': ['10:00', '12:00', '14:00', '16:00'],
+        'Вс, 31 мая': ['10:00'],
+        'Пн, 1 июня': ['10:00', '12:00', '16:00'],
+        'Вт, 2 июня': ['10:00', '12:00', '14:00', '16:00'],
+        'Ср, 3 июня': ['14:00', '16:00'],
+        'Чт, 4 июня': ['10:00', '14:00', '16:00']        
+    }
+    for day, times in dates.items():
+        # dates_keyboard = types.InlineKeyboardMarkup(row_width=7)
+        btns = []
+        dates_keyboard = types.InlineKeyboardMarkup(row_width=7)
+        for time in times:
+            btns.append(types.InlineKeyboardButton(time, callback_data= day + ' ' + time))
+        dates_keyboard.add(*btns)              
+        bot.send_message(message.chat.id, text=day, reply_markup=dates_keyboard)

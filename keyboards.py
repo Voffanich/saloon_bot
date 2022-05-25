@@ -25,3 +25,5 @@ btn_texts = ['Записаться', 'Перенести/отменить виз
             'Настроить напоминания', 'Прайс', 'Обо мне', 'Что может бот?']
 btns = [types.KeyboardButton(text) for text in btn_texts]
 main_keyboard.add(*btns)
+
+

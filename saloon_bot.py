@@ -142,6 +142,11 @@ def func(message):
         clients[message.from_user.id].admin = False      
         bot.send_message(message.chat.id, text='admin mode off', reply_markup=kb.main_keyboard)
         
+        
+    elif (message.text == 'Коррекция бровей'):
+        # bot.send_message(message.chat.id, text='Смотрите, какие окошки доступны для записи', reply_markup=kb.dates_keyboard)
+        bf.create_dates_keyboard(bot, message)
+            
     else:
         bot.send_message(message.chat.id, text='К такому меня жизнь не готовила) Если что-то не получается, пользуйтесь, пожалуйста, кнопками меню бота')
 
