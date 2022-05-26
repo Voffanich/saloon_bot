@@ -12,20 +12,14 @@ bot = telebot.TeleBot(apikey)
 
 clients = bf.create_client_objects_from_db()
 
-"""# список клиентов из базы
-clients_list = db.clients_list()
-
-# генерация списка объектов клиентов
-for clients[message.from_user.id] in clients_list:
-    client_objects.append(Clients(clients[message.from_user.id]))"""
-
 
 # Обработка команды Start
 @bot.message_handler(commands=['start'])
 def start(message, res=False):
     if message.from_user.id not in clients:
-        bot.send_message(message.chat.id, text="Да вы, батенька, впервые тут", reply_markup=kb.main_keyboard)
         clients[message.from_user.id] = Client(message.from_user.id, '', '', '', '', '')
+        bot.send_message(message.chat.id, text="Да вы, батенька, впервые тут", reply_markup=kb.main_keyboard)
+        
     else:    
         bot.send_message(message.chat.id, text="Дорова! Здесь ты можешь записаться ко мне на процедуры. Жамкай нужные кнопки", reply_markup=kb.main_keyboard)
            
@@ -34,7 +28,7 @@ def verify_phone_number(message):
     if bf.validate_phone(message.text)[0]:
        
         clients[message.from_user.id].phone_number = bf.validate_phone(message.text)[1]    
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         btn1 = types.KeyboardButton("Телефон верный")
         btn2 = types.KeyboardButton("Изменить номер телефона")
         markup.add(btn1, btn2)
@@ -49,7 +43,7 @@ def verify_name(message):
         clients[message.from_user.id].first_name = bf.validate_name(message.text)[1]
         clients[message.from_user.id].last_name = bf.validate_name(message.text)[2]
         
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         btn1 = types.KeyboardButton("Да, имя верное")
         btn2 = types.KeyboardButton("Изменить имя")
         clients[message.from_user.id].flag = ''
@@ -151,11 +145,16 @@ def func(call):
     if 'procedure=' in call.data:
         procedure = call.data.split('=')[1]
         print(procedure)
-        clients[call.message.from_user.id].choosen_procedure = db.procedure_id(procedure)   #косяк с айдишником клиента
-        print(clients[call.message.from_user.id].choosen_procedure)
+        clients[call.from_user.id].choosen_procedure = db.procedure_id(procedure)   #косяк с айдишником клиента
+        print(clients[call.from_user.id].choosen_procedure)
         bf.create_dates_keyboard(bot, call.message)
+        
     elif call.data == 'choose_procedure':
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Такс, выбрайте процедуру, на которую хотите прийти', reply_markup=kb.procedures_keyboard)
+    
+    elif call.data == 'Главное меню':
+        bot.send_message(chat_id=call.message.chat.id, text='Главне меню', reply_markup=kb.main_keyboard)
+    
 
     
 # Запуск бота    

@@ -7,8 +7,8 @@ from db_handler import db
 procedures_keyboard = types.InlineKeyboardMarkup(row_width=1)
 # procedures = db.get_procedures_db()
 procedures = db.get_procedures_db()
-procedures.append('Главное меню')
 btns = [types.InlineKeyboardButton(procedure, callback_data='procedure=' + procedure) for procedure in procedures]
+btns.append(types.InlineKeyboardButton('Главное меню', callback_data='Главное меню'))
 procedures_keyboard.add(*btns)
 
 
