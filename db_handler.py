@@ -143,7 +143,16 @@ class DB_handler():
             self.cursor.execute(query, (db_row[0], db_row[1], db_row[2], db_row[3], db_row[4], db_row[5], db_row[6], db_row[7],db_row[8], db_row[9]))
             self.connection.commit()  
             db_row = []
-            
+    
+    def procedure_id(self, procedure):
+        query = f"""
+        SELECT id FROM procedures WHERE procedure=?
+        """
+        self.cursor.execute(query, (procedure,))
+        procedure_id = self.cursor.fetchall()       # Проверить на адекватность!
+        self.connection.commit()
+                    
+        return procedure_id[0][0]       
                 
             
         

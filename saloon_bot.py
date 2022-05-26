@@ -141,15 +141,21 @@ def func(message):
     elif (message.text == 'admino stop' or message.text == 'stop admino' or message.text == 'админо стоп' or message.text == 'стоп админо'):
         clients[message.from_user.id].admin = False      
         bot.send_message(message.chat.id, text='admin mode off', reply_markup=kb.main_keyboard)
-        
-        
-    elif (message.text == 'Коррекция бровей'):
-        # bot.send_message(message.chat.id, text='Смотрите, какие окошки доступны для записи', reply_markup=kb.dates_keyboard)
-        bf.create_dates_keyboard(bot, message)
+     
             
     else:
         bot.send_message(message.chat.id, text='К такому меня жизнь не готовила) Если что-то не получается, пользуйтесь, пожалуйста, кнопками меню бота')
 
+@bot.callback_query_handler(func=lambda call: True)
+def func(call):
+    if 'procedure=' in call.data:
+        procedure = call.data.split('=')[1]
+        print(procedure)
+        clients[call.message.from_user.id].choosen_procedure = db.procedure_id(procedure)   #косяк с айдишником клиента
+        print(clients[call.message.from_user.id].choosen_procedure)
+        bf.create_dates_keyboard(bot, call.message)
+    elif call.data == 'choose_procedure':
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Такс, выбрайте процедуру, на которую хотите прийти', reply_markup=kb.procedures_keyboard)
 
     
 # Запуск бота    

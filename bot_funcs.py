@@ -64,11 +64,16 @@ def create_dates_keyboard(bot, message):
         'Ср, 3 июня': ['14:00', '16:00'],
         'Чт, 4 июня': ['10:00', '14:00', '16:00']        
     }
+    
+    btns = []
+    
     for day, times in dates.items():
-        # dates_keyboard = types.InlineKeyboardMarkup(row_width=7)
-        btns = []
-        dates_keyboard = types.InlineKeyboardMarkup(row_width=7)
-        for time in times:
-            btns.append(types.InlineKeyboardButton(time, callback_data= day + ' ' + time))
-        dates_keyboard.add(*btns)              
-        bot.send_message(message.chat.id, text=day, reply_markup=dates_keyboard)
+        dates_keyboard = types.InlineKeyboardMarkup(row_width=3)
+        btns.append(types.InlineKeyboardButton(day + ' (' + str(len(times)) + ')', callback_data= day))
+    
+    btns.append(types.InlineKeyboardButton('Выбор процедуры', callback_data='choose_procedure'))    
+    proc_slice = slice(0, len(btns)-1, 1)
+    dates_keyboard.add(*btns[proc_slice])
+    dates_keyboard.row(btns[-1])              
+    bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text='Выберите день', reply_markup=dates_keyboard)
+    

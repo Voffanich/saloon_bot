@@ -9,4 +9,4 @@ class Client():
         self.last_name = last_name
         self.timing = timing
         self.admin = False
-        
+        self.chosen_procedure = ''
