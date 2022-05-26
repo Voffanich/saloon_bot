@@ -1,6 +1,6 @@
 class Client():
     
-    def __init__(self, id: int = '0', username: str = '', first_name: str = '', last_name: str = '', timing: str = '2:30',phone_number: str = ''):
+    def __init__(self, id: int, username: str = '', first_name: str = '', last_name: str = '', timing: str = '2:30', phone_number: str = ''):
         self.id = id
         self.flag = ''
         self.phone_number = phone_number
