@@ -150,7 +150,7 @@ class DB_handler():
         """
         self.cursor.execute(query, (procedure,))
         procedure_id = self.cursor.fetchall()       # Проверить на адекватность!
-        self.connection.commit()
+        self.connection.commit()        
                     
         return procedure_id[0][0]       
                 

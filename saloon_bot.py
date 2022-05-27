@@ -1,5 +1,3 @@
-
-from types import NoneType
 import telebot
 from telebot import types
 from credentials import apikey, admin_usernames
@@ -142,20 +140,36 @@ def func(message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def func(call):
+    # вывод доступных для посещения дней для выбранной процедуры
     if 'procedure=' in call.data:
         procedure = call.data.split('=')[1]
-        print(procedure)
-        clients[call.from_user.id].choosen_procedure = db.procedure_id(procedure)   #косяк с айдишником клиента
-        print(clients[call.from_user.id].choosen_procedure)
-        bf.create_dates_keyboard(bot, call.message)
         
+        clients[call.from_user.id].chosen_procedure = procedure
+        # db.procedure_id(procedure)   #косяк с айдишником клиента?
+        
+        dates_keyboard = kb.create_dates_keyboard(clients[call.from_user.id].dates)
+        
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Выберите день, на который можно записаться на <b>' + clients[call.from_user.id].chosen_procedure + '</b>', reply_markup=dates_keyboard, parse_mode='HTML')
+    
+    # вывод доступных для посещения процедур    
     elif call.data == 'choose_procedure':
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Такс, выбрайте процедуру, на которую хотите прийти', reply_markup=kb.procedures_keyboard)
     
+    # возврат в главное меню бота
     elif call.data == 'Главное меню':
         bot.send_message(chat_id=call.message.chat.id, text='Главне меню', reply_markup=kb.main_keyboard)
     
-
+    # вывод доступных для записи времен (окон)    
+    elif call.data.startswith('day='):
+        day = call.data.split('=')[1]        
+        times_keyboard = kb.create_times_keyboard(clients[call.from_user.id].dates, day, clients[call.from_user.id].chosen_procedure)
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Выберите подходящее время из доступных на <b>' + day + '</b>', reply_markup=times_keyboard, parse_mode='HTML')
+    
+    # подтверждение записи на выбранное время
+    elif call.data.startswith('daytime&'):
+        mess_text = 'Записываю вас на <b>' +  call.data.split('&')[1] + ', ' + call.data.split('&')[2] + '</b>?'
+        confirm_book_keyboard = kb.create_confirm_book_keyboard(clients[call.from_user.id].chosen_procedure)
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup=confirm_book_keyboard, parse_mode='HTML') 
     
 # Запуск бота    
 bot.polling(none_stop = True, interval = 0)

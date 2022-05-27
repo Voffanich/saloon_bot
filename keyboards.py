@@ -22,8 +22,65 @@ admin_keyboard.add(*btns)
 # клавиатура главного меню
 main_keyboard =  types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 btn_texts = ['Записаться', 'Перенести/отменить визит', 'Проверить запись', 
-            'Настроить напоминания', 'Прайс', 'Обо мне', 'Что может бот?']
+            'Настроить напоминания', 'Прайс', 'Обо мне', 'Как добраться', 'Что может бот?']
 btns = [types.KeyboardButton(text) for text in btn_texts]
 main_keyboard.add(*btns)
 
+# клавиатура подтверждения записи на выбранную дату и время
+def create_confirm_book_keyboard(procedure: str)  -> types.InlineKeyboard:
+    confirm_book_keyboard = types.InlineKeyboardMarkup(row_width=2)
+    btn1 = types.InlineKeyboardButton('Подтверждаю запись', callback_data='confirm_book')
+    btn2 = types.InlineKeyboardButton('Выбрать другое время', callback_data='procedure=' + procedure)
+    confirm_book_keyboard.add(btn1, btn2)
+    
+    return confirm_book_keyboard
 
+# клавиатура, выводящие достуаные времена для записи в выбранный день
+def create_times_keyboard(dates: dict, day: str, procedure: str)  -> types.InlineKeyboard:
+    """    
+    Function creates keyboard with available times for booking.
+    
+    Args:
+        dates (dict): dictionary of available days and times for booking
+        day (str): day with available times choosen by user
+        procedure (str): chosen procedure
+        
+    Returns:
+        telegram inline keyboard: configured telegram inline keyboard with available days for a chosen procedure
+    """
+    btns = []
+    times_keyboard = types.InlineKeyboardMarkup(row_width=5)
+    
+    for time in dates[day]:        
+        btns.append(types.InlineKeyboardButton(time, callback_data = 'daytime&' + day + '&' + time))
+        
+    btns.append(types.InlineKeyboardButton('Выбрать другой день', callback_data='procedure=' + procedure))
+    proc_slice = slice(0, len(btns)-1, 1)   # создание среза из списка кнопок, все кнопки кроме последней
+    times_keyboard.add(*btns[proc_slice])   # добавление самовыравнивающейся клавиатуры из времен, кроме последней кнопки
+    times_keyboard.row(btns[-1])            # добавление отдельным рядом кнопки "вернуться к выбору дня"
+    
+    return times_keyboard
+
+
+def create_dates_keyboard(dates: dict) -> types.InlineKeyboard:
+    """
+    Function creates telegram inline keyboard with with days that have times available for booking.
+    
+    Args:
+        dates (dict): dictionary of available days and times for booking 
+
+    Returns:
+        telegram inline keyboard: configured telegram inline keyboard with available times within a chosen day
+    """
+    btns = []
+    dates_keyboard = types.InlineKeyboardMarkup(row_width=3)
+    
+    for day, times in dates.items():
+        btns.append(types.InlineKeyboardButton(day + ' (' + str(len(times)) + ')', callback_data = 'day=' + day))
+    
+    btns.append(types.InlineKeyboardButton('Выбор процедуры', callback_data='choose_procedure'))    
+    proc_slice = slice(0, len(btns)-1, 1)
+    dates_keyboard.add(*btns[proc_slice])
+    dates_keyboard.row(btns[-1])              
+    
+    return dates_keyboard
