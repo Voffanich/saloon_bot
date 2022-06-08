@@ -146,6 +146,7 @@ def func(call):
         
         clients[call.from_user.id].chosen_procedure = procedure
         # db.procedure_id(procedure)   #косяк с айдишником клиента?
+        print('procedure in clien instance ', clients[call.from_user.id].chosen_procedure)
         
         dates_keyboard = kb.create_dates_keyboard(clients[call.from_user.id].dates)
         
@@ -167,9 +168,23 @@ def func(call):
     
     # подтверждение записи на выбранное время
     elif call.data.startswith('daytime&'):
-        mess_text = 'Записываю вас на <b>' +  call.data.split('&')[1] + ', ' + call.data.split('&')[2] + '</b>?'
-        confirm_book_keyboard = kb.create_confirm_book_keyboard(clients[call.from_user.id].chosen_procedure)
+        book_date = call.data.split('&')[1]
+        book_time = call.data.split('&')[2]
+        procedure = clients[call.from_user.id].chosen_procedure 
+        booked_date = book_date + '&' + book_time
+        
+        mess_text = 'Записываю вас на <b>' +  book_date + ', ' + book_time + '</b>?'
+        confirm_book_keyboard = kb.create_confirm_book_keyboard(procedure, booked_date)
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup=confirm_book_keyboard, parse_mode='HTML') 
+    
+    # занесение записи на процедуру в базу
+    elif call.data.startswith('confirm_book&'):
+        procedure = call.data.split('&')[1]
+        book_date = call.data.split('&')[2]
+        book_time = call.data.split('&')[3]
+        print(procedure)
+        mess_text = 'Отлично, вы записаны на ' + procedure + ' на ' + book_date + ', ' + book_time
+        print(mess_text)
     
 # Запуск бота    
 bot.polling(none_stop = True, interval = 0)
