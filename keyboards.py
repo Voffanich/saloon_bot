@@ -1,3 +1,4 @@
+import sys
 from telebot import types
 import bot_funcs as bf
 from db_handler import db
@@ -30,6 +31,9 @@ main_keyboard.add(*btns)
 def create_confirm_book_keyboard(procedure: str, booked_date: str) -> types.InlineKeyboardMarkup:
     book_date = booked_date.split('&')[0]
     book_time = booked_date.split('&')[1]
+    
+    print('confirm_book&' + procedure + '&' + book_date + '&' + book_time)
+    print(sys.getsizeof('confirm_book&' + procedure + '&' + book_date + '&' + book_time))
     # print(procedure, book_date, book_time)
     confirm_book_keyboard = types.InlineKeyboardMarkup(row_width=2)
     btn1 = types.InlineKeyboardButton('Подтверждаю запись', callback_data='confirm_book&' + procedure + '&' + book_date + '&' + book_time)
@@ -39,7 +43,7 @@ def create_confirm_book_keyboard(procedure: str, booked_date: str) -> types.Inli
     return confirm_book_keyboard
 
 # клавиатура, выводящие достуаные времена для записи в выбранный день
-def create_times_keyboard(dates: dict, day: str, procedure: str)  -> types.InlineKeyboardMarkup:
+def create_times_keyboard(dates: dict, day: str, procedure: str)  -> types.InlineKeyboardMarkup:  
     """    
     Function creates keyboard with available times for booking.
     

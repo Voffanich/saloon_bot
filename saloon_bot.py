@@ -9,6 +9,7 @@ from client import Client
 bot = telebot.TeleBot(apikey)
 
 clients = bf.create_client_objects_from_db()
+procedures = db.get_procedures_data()
 
 
 # Обработка команды Start
@@ -75,6 +76,7 @@ def func(message):
             bot.send_message(message.chat.id, text='Впервые здесь? Давайте-ка занесем вас в базу клиентов. '
                                                     f'В телеграме вы подписаны как <b>{clients[message.from_user.id].first_name} {clients[message.from_user.id].last_name}</b>. '
                                                     'Оставляем или хотите изменить?', reply_markup=markup, parse_mode="HTML")
+    
                     
     elif (message.text == 'Перенести/отменить визит'):
         bot.send_message(message.chat.id, text='Ну, начинается!')

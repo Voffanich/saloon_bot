@@ -1,4 +1,3 @@
-from ast import Str
 import re
 import string
 from typing import Dict, List
@@ -29,7 +28,7 @@ def validate_name(name: str) -> List [Boolean]:
         return [False, None, None]
 
   
-def get_procedures_excel() -> List[Str]:
+def get_procedures_excel() -> List[str]:
     cols = [0]
     procedures_list = []
     
@@ -48,3 +47,5 @@ def create_client_objects_from_db() -> Dict:
     
     return client_objects
 
+
+    

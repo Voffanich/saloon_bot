@@ -1,5 +1,6 @@
+import copy
 import sqlite3
-from typing import List
+from typing import Dict, List
 from xmlrpc.client import Boolean
 import pandas as pd
 
@@ -132,6 +133,19 @@ class DB_handler():
     def update_procedures(self):
         db_row = []    
         procedures_df = pd.read_excel('user_data/procedures.xlsx').fillna("0")
+        
+        # очистка таблицы
+        query = f"""
+            DELETE FROM procedures
+            """    
+        self.cursor.execute(query, )
+        
+        # сброс автоинкремента индекса таблицы
+        query = f"""
+            UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME="procedures"
+            """  
+        self.cursor.execute(query, )
+        
         # print(procedures_df)
         for i in range(0, len(procedures_df)):
             for val in procedures_df.iloc[i]:
@@ -144,7 +158,11 @@ class DB_handler():
             self.connection.commit()  
             db_row = []
     
-    def procedure_id(self, procedure):
+    # NOT USED
+    def procedure_id_from_name(self, procedure: str) -> int:
+        """
+        Returns the id of procedure (int) according to the provided name (string)
+        """
         query = f"""
         SELECT id FROM procedures WHERE procedure=?
         """
@@ -153,9 +171,42 @@ class DB_handler():
         self.connection.commit()        
                     
         return procedure_id[0][0]       
-                
+    
+    # NOT USED
+    def procedure_name_from_id(self, id: int) -> str:
+        """
+        Returns the name of procedure (string) according to the provided id (int)
+        """
+        query = f"""
+        SELECT procedure FROM procedures WHERE id=?
+        """
+        self.cursor.execute(query, (id,))
+        procedure_name = self.cursor.fetchall()       # Проверить на адекватность!
+        self.connection.commit()        
+                    
+        return procedure_name[0][0]        
             
+    def get_procedures_data(self) -> List[Dict]:
+        """
+        Returns list of dicts that contain copy of procedures table in database
         
+        List [Dict {id, procedure, duration, price, mon_sched, tue_sched, wed_sched, thu_sched, fri_sched, sat_sched, sun_sched}]
+        """
+        
+        query = f"""
+        SELECT id, procedure, duration, price, mon_sched, tue_sched, wed_sched, thu_sched, fri_sched, sat_sched, sun_sched FROM procedures
+        """
+        self.cursor.execute(query)
+        procedures = self.cursor.fetchall()
+        self.connection.commit()
+        proc = {}   # словарь данных процедуры
+        procedures_data = []    # список словарей с данными процедур
+        
+        for procedure in procedures:
+            (proc['id'], proc['procedure'], proc['duration'], proc['price'], proc['mon_sched'], proc['tue_sched'], proc['wed_sched'], proc['thu_sched'], proc['fri_sched'], proc['sat_sched'], proc['sun_sched']) = procedure
+            procedures_data.append(copy.deepcopy(proc))
+                
+        return procedures_data    
         
         
 db = DB_handler()
