@@ -11,7 +11,6 @@ bot = telebot.TeleBot(apikey)
 clients = bf.create_client_objects_from_db()
 procedures = db.get_procedures_data()
 
-
 # Обработка команды Start
 @bot.message_handler(commands=['start'])
 def start(message, res=False):
@@ -22,7 +21,8 @@ def start(message, res=False):
     else:    
         bot.send_message(message.chat.id, text="Дорова! Здесь ты можешь записаться ко мне на процедуры. Жамкай нужные кнопки", reply_markup=kb.main_keyboard)
            
-@bot.message_handler(func=lambda message: clients[message.from_user.id].flag == 'проверить телефон')
+# @bot.message_handler(func=lambda message: clients[message.from_user.id].flag == 'проверить телефон')
+@bot.message_handler(func=lambda message: bf.check_flag(clients, message.from_user.id) == 'проверить телефон')
 def verify_phone_number(message):
     if bf.validate_phone(message.text)[0]:
        
@@ -36,7 +36,8 @@ def verify_phone_number(message):
     else:
         bot.send_message(message.chat.id, text='Вы ввели некорректный номер телефона. Введите, пожалуйста, правильный в формате +375хх без пробелов и дефисов')
 
-@bot.message_handler(func=lambda message: clients[message.from_user.id].flag == 'проверить имя')
+# @bot.message_handler(func=lambda message: clients[message.from_user.id].flag == 'проверить имя')
+@bot.message_handler(func=lambda message: bf.check_flag(clients, message.from_user.id) == 'проверить имя')
 def verify_name(message):
     if bf.validate_name(message.text)[0]:
         clients[message.from_user.id].first_name = bf.validate_name(message.text)[1]
@@ -145,13 +146,8 @@ def func(call):
     # вывод доступных для посещения дней для выбранной процедуры
     if 'procedure=' in call.data:
         procedure = call.data.split('=')[1]
-        
         clients[call.from_user.id].chosen_procedure = procedure
-        # db.procedure_id(procedure)   #косяк с айдишником клиента?
-        print('procedure in clien instance ', clients[call.from_user.id].chosen_procedure)
-        
         dates_keyboard = kb.create_dates_keyboard(clients[call.from_user.id].dates)
-        
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Выберите день, на который можно записаться на <b>' + clients[call.from_user.id].chosen_procedure + '</b>', reply_markup=dates_keyboard, parse_mode='HTML')
     
     # вывод доступных для посещения процедур    
@@ -176,16 +172,21 @@ def func(call):
         booked_date = book_date + '&' + book_time
         
         mess_text = 'Записываю вас на <b>' +  book_date + ', ' + book_time + '</b>?'
-        confirm_book_keyboard = kb.create_confirm_book_keyboard(procedure, booked_date)
+        confirm_book_keyboard = kb.create_confirm_book_keyboard(procedures, procedure, booked_date)
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup=confirm_book_keyboard, parse_mode='HTML') 
     
     # занесение записи на процедуру в базу
     elif call.data.startswith('confirm_book&'):
-        procedure = call.data.split('&')[1]
+        procedure_id = int(call.data.split('&')[1])
         book_date = call.data.split('&')[2]
-        book_time = call.data.split('&')[3]
-        print(procedure)
-        mess_text = 'Отлично, вы записаны на ' + procedure + ' на ' + book_date + ', ' + book_time
+        book_time = call.data.split('&')[3]        
+        procedure = bf.procedure_name_from_id(procedures, procedure_id)
+        client_name = clients[call.from_user.id].first_name + ' ' +  clients[call.from_user.id].last_name
+        price = int(procedures[procedure_id - 1]['price'])
+        
+        mess_text = 'Отлично, вы записаны на <b>' + procedure + '</b> на <b>' + book_date + ', ' + book_time + '</b>'
+        db.add_visit(client_name, book_date, book_time, book_time, procedure, 'active', price)
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup='', parse_mode='HTML')
         print(mess_text)
     
 # Запуск бота    

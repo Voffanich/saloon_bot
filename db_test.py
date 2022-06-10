@@ -6,9 +6,7 @@ db.setup()
 db.update_procedures()
 # print(db.get_procedures_data())
 
-for procedure in db.get_procedures_data():
-    print(procedure)
-
+procedures = db.get_procedures_data()
 
 
 

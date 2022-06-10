@@ -71,11 +71,12 @@ class DB_handler():
         
     # ПЕРЕСМОТРЕТЬ ИМЕНА СТОЛБЦОВ
     def add_visit(self, client_name: str, date: str, start_time: str, finish_time: str, procedure: str, status: str, price: int = 35):
+        print(client_name, date, start_time, finish_time, procedure, status, price)
         query = f"""
-        INSERT INTO visits (id, client_name, date, start_time, finish_time, procedure, price, status)
-        VALUES ('{client_name}', {date}, '{start_time}', '{finish_time}', '{procedure}', {status}, {price}'); 
+        INSERT INTO visits (client_name, date, start_time, finish_time, procedure, price, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?) 
         """
-        self.cursor.execute(query)
+        self.cursor.execute(query, (client_name, date, start_time, finish_time, procedure, price, status, ))
         self.connection.commit
     
     def client_exists(self, username: str) -> Boolean:
@@ -139,12 +140,14 @@ class DB_handler():
             DELETE FROM procedures
             """    
         self.cursor.execute(query, )
+        self.connection.commit()  
         
         # сброс автоинкремента индекса таблицы
         query = f"""
             UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME="procedures"
             """  
         self.cursor.execute(query, )
+        self.connection.commit()  
         
         # print(procedures_df)
         for i in range(0, len(procedures_df)):
@@ -167,7 +170,7 @@ class DB_handler():
         SELECT id FROM procedures WHERE procedure=?
         """
         self.cursor.execute(query, (procedure,))
-        procedure_id = self.cursor.fetchall()       # Проверить на адекватность!
+        procedure_id = self.cursor.fetchall()       
         self.connection.commit()        
                     
         return procedure_id[0][0]       
@@ -181,7 +184,7 @@ class DB_handler():
         SELECT procedure FROM procedures WHERE id=?
         """
         self.cursor.execute(query, (id,))
-        procedure_name = self.cursor.fetchall()       # Проверить на адекватность!
+        procedure_name = self.cursor.fetchall()       
         self.connection.commit()        
                     
         return procedure_name[0][0]        

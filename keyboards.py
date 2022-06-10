@@ -28,15 +28,13 @@ btns = [types.KeyboardButton(text) for text in btn_texts]
 main_keyboard.add(*btns)
 
 # клавиатура подтверждения записи на выбранную дату и время
-def create_confirm_book_keyboard(procedure: str, booked_date: str) -> types.InlineKeyboardMarkup:
+def create_confirm_book_keyboard(procedures: list, procedure: str, booked_date: str) -> types.InlineKeyboardMarkup:
     book_date = booked_date.split('&')[0]
     book_time = booked_date.split('&')[1]
+    procedure_id = bf.procedure_id_from_name(procedures, procedure)
     
-    print('confirm_book&' + procedure + '&' + book_date + '&' + book_time)
-    print(sys.getsizeof('confirm_book&' + procedure + '&' + book_date + '&' + book_time))
-    # print(procedure, book_date, book_time)
     confirm_book_keyboard = types.InlineKeyboardMarkup(row_width=2)
-    btn1 = types.InlineKeyboardButton('Подтверждаю запись', callback_data='confirm_book&' + procedure + '&' + book_date + '&' + book_time)
+    btn1 = types.InlineKeyboardButton('Подтверждаю запись', callback_data='confirm_book&' + str(procedure_id) + '&' + book_date + '&' + book_time)
     btn2 = types.InlineKeyboardButton('Выбрать другое время', callback_data='procedure=' + procedure)
     confirm_book_keyboard.add(btn1, btn2)
     
