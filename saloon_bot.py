@@ -148,7 +148,7 @@ def func(call):
         procedure = call.data.split('=')[1]
         clients[call.from_user.id].chosen_procedure = procedure
         dates_keyboard = kb.create_dates_keyboard(clients[call.from_user.id].dates)
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Выберите день, на который можно записаться на <b>' + clients[call.from_user.id].chosen_procedure + '</b>', reply_markup=dates_keyboard, parse_mode='HTML')
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=f'Выберите день, на который можно записаться на <b>{clients[call.from_user.id].chosen_procedure}</b>', reply_markup=dates_keyboard, parse_mode='HTML')
     
     # вывод доступных для посещения процедур    
     elif call.data == 'choose_procedure':
@@ -171,7 +171,7 @@ def func(call):
         procedure = clients[call.from_user.id].chosen_procedure 
         booked_date = book_date + '&' + book_time
         
-        mess_text = 'Записываю вас на <b>' +  book_date + ', ' + book_time + '</b>?'
+        mess_text = f'Записываю вас на <b>{book_date}, {book_time}</b>?'
         confirm_book_keyboard = kb.create_confirm_book_keyboard(procedures, procedure, booked_date)
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup=confirm_book_keyboard, parse_mode='HTML') 
     
@@ -184,7 +184,7 @@ def func(call):
         client_name = clients[call.from_user.id].first_name + ' ' +  clients[call.from_user.id].last_name
         price = int(procedures[procedure_id - 1]['price'])
         
-        mess_text = 'Отлично, вы записаны на <b>' + procedure + '</b> на <b>' + book_date + ', ' + book_time + '</b>'
+        mess_text = f'Отлично, вы записаны на <b>{procedure}</b> на <b>{book_date}, {book_time}</b>'
         db.add_visit(client_name, book_date, book_time, book_time, procedure, 'active', price)
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup='', parse_mode='HTML')
         print(mess_text)

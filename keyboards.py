@@ -8,7 +8,7 @@ from db_handler import db
 procedures_keyboard = types.InlineKeyboardMarkup(row_width=1)
 # procedures = db.get_procedures_db()
 procedures = db.get_procedures_db()
-btns = [types.InlineKeyboardButton(procedure, callback_data='procedure=' + procedure) for procedure in procedures]
+btns = [types.InlineKeyboardButton(procedure, callback_data=f'procedure={procedure}') for procedure in procedures]
 btns.append(types.InlineKeyboardButton('Главное меню', callback_data='Главное меню'))
 procedures_keyboard.add(*btns)
 
@@ -34,8 +34,8 @@ def create_confirm_book_keyboard(procedures: list, procedure: str, booked_date: 
     procedure_id = bf.procedure_id_from_name(procedures, procedure)
     
     confirm_book_keyboard = types.InlineKeyboardMarkup(row_width=2)
-    btn1 = types.InlineKeyboardButton('Подтверждаю запись', callback_data='confirm_book&' + str(procedure_id) + '&' + book_date + '&' + book_time)
-    btn2 = types.InlineKeyboardButton('Выбрать другое время', callback_data='procedure=' + procedure)
+    btn1 = types.InlineKeyboardButton('Подтверждаю запись', callback_data=f'confirm_book&{str(procedure_id)}&{book_date}&{book_time}')
+    btn2 = types.InlineKeyboardButton('Выбрать другое время', callback_data=f'procedure={procedure}')
     confirm_book_keyboard.add(btn1, btn2)
     
     return confirm_book_keyboard
@@ -57,9 +57,9 @@ def create_times_keyboard(dates: dict, day: str, procedure: str)  -> types.Inlin
     times_keyboard = types.InlineKeyboardMarkup(row_width=5)
     
     for time in dates[day]:        
-        btns.append(types.InlineKeyboardButton(time, callback_data = 'daytime&' + day + '&' + time))
+        btns.append(types.InlineKeyboardButton(time, callback_data = f'daytime&{day}&{time}'))
         
-    btns.append(types.InlineKeyboardButton('Выбрать другой день', callback_data='procedure=' + procedure))
+    btns.append(types.InlineKeyboardButton('Выбрать другой день', callback_data=f'procedure={procedure}'))
     proc_slice = slice(0, len(btns)-1, 1)   # создание среза из списка кнопок, все кнопки кроме последней
     times_keyboard.add(*btns[proc_slice])   # добавление самовыравнивающейся клавиатуры из времен, кроме последней кнопки
     times_keyboard.row(btns[-1])            # добавление отдельным рядом кнопки "вернуться к выбору дня"
@@ -81,7 +81,7 @@ def create_dates_keyboard(dates: dict) -> types.InlineKeyboardMarkup:
     dates_keyboard = types.InlineKeyboardMarkup(row_width=3)
     
     for day, times in dates.items():
-        btns.append(types.InlineKeyboardButton(day + ' (' + str(len(times)) + ')', callback_data = 'day=' + day))
+        btns.append(types.InlineKeyboardButton(f'day ({str(len(times))})', callback_data = f'day={day}'))
     
     btns.append(types.InlineKeyboardButton('Выбор процедуры', callback_data='choose_procedure'))    
     proc_slice = slice(0, len(btns)-1, 1)
