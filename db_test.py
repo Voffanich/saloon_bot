@@ -8,7 +8,7 @@ db.update_procedures()
 
 procedures = db.get_procedures_data()
 
-
+db.show_visits()
 
 # print(db.get_clients_data())
 

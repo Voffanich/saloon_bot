@@ -81,7 +81,7 @@ def create_dates_keyboard(dates: dict) -> types.InlineKeyboardMarkup:
     dates_keyboard = types.InlineKeyboardMarkup(row_width=3)
     
     for day, times in dates.items():
-        btns.append(types.InlineKeyboardButton(f'day ({str(len(times))})', callback_data = f'day={day}'))
+        btns.append(types.InlineKeyboardButton(f'{day} ({str(len(times))})', callback_data = f'day={day}'))
     
     btns.append(types.InlineKeyboardButton('Выбор процедуры', callback_data='choose_procedure'))    
     proc_slice = slice(0, len(btns)-1, 1)

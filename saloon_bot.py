@@ -17,7 +17,6 @@ def start(message, res=False):
     if message.from_user.id not in clients:
         clients[message.from_user.id] = Client(message.from_user.id, '', '', '', '', '')
         bot.send_message(message.chat.id, text="Да вы, батенька, впервые тут", reply_markup=kb.main_keyboard)
-        
     else:    
         bot.send_message(message.chat.id, text="Дорова! Здесь ты можешь записаться ко мне на процедуры. Жамкай нужные кнопки", reply_markup=kb.main_keyboard)
            
@@ -185,9 +184,12 @@ def func(call):
         price = int(procedures[procedure_id - 1]['price'])
         
         mess_text = f'Отлично, вы записаны на <b>{procedure}</b> на <b>{book_date}, {book_time}</b>'
+        
         db.add_visit(client_name, book_date, book_time, book_time, procedure, 'active', price)
+        db.show_visits()
+        
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup='', parse_mode='HTML')
-        print(mess_text)
+        
     
 # Запуск бота    
 bot.polling(none_stop = True, interval = 0)

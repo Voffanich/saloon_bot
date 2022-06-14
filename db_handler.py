@@ -71,12 +71,24 @@ class DB_handler():
         
     # ПЕРЕСМОТРЕТЬ ИМЕНА СТОЛБЦОВ
     def add_visit(self, client_name: str, date: str, start_time: str, finish_time: str, procedure: str, status: str, price: int = 35):
-        print(client_name, date, start_time, finish_time, procedure, status, price)
-        query = f"""
+        # print(client_name, date, start_time, finish_time, procedure, status, price)
+        query = """
         INSERT INTO visits (client_name, date, start_time, finish_time, procedure, price, status)
         VALUES (?, ?, ?, ?, ?, ?, ?) 
         """
-        self.cursor.execute(query, (client_name, date, start_time, finish_time, procedure, price, status, ))
+        # VALUES (?, ?, ?, ?, ?, ?, ?) 
+        # VALUES ('name', '23 june', '10:00', '12:00', 'Manicure', 32, 'active') 
+        
+        try:
+            # self.cursor.execute(query)
+            self.cursor.execute(query, (client_name, date, start_time, finish_time, procedure, price, status, ))
+            self.connection.commit
+        except sqlite3.Error as error:
+            print('SQLite error: ', error)
+    
+    def show_visits(self):
+        reply = self.cursor.execute("SELECT * FROM visits")
+        print(reply.fetchall())
         self.connection.commit
     
     def client_exists(self, username: str) -> Boolean:
