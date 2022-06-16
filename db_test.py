@@ -1,14 +1,19 @@
 from db_handler import DB_handler
 import bot_funcs as bf
+from datetime import datetime as dt
+
+print(dt.now().strftime('%y-%m-%d_%H-%M-%S'))
+
 
 db = DB_handler()
-db.setup()
-db.update_procedures()
+
+# db.setup()
+# db.update_procedures()
 # print(db.get_procedures_data())
 
-procedures = db.get_procedures_data()
+# procedures = db.get_procedures_data()
 
-db.show_visits()
+# db.show_visits()
 
 # print(db.get_clients_data())
 
