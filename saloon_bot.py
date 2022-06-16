@@ -6,6 +6,8 @@ from db_handler import db
 import keyboards as kb
 from client import Client
 
+db.backup_db_file('saloon.sqlite')
+
 bot = telebot.TeleBot(apikey)
 
 clients = bf.create_client_objects_from_db()

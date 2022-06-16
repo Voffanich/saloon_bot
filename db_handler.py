@@ -1,9 +1,10 @@
 import copy
+import shutil
 import sqlite3
 from typing import Dict, List
 from xmlrpc.client import Boolean
 import pandas as pd
-
+from datetime import datetime as dt
 
 class DB_handler():
     
@@ -82,19 +83,19 @@ class DB_handler():
         try:
             # self.cursor.execute(query)
             self.cursor.execute(query, (client_name, date, start_time, finish_time, procedure, price, status, ))
-            self.connection.commit
+            self.connection.commit()
         except sqlite3.Error as error:
             print('SQLite error: ', error)
     
-    def show_visits(self):
+    def show_visits(self) -> list:
         reply = self.cursor.execute("SELECT * FROM visits")
         print(reply.fetchall())
-        self.connection.commit
+        self.connection.commit()
     
     def client_exists(self, username: str) -> Boolean:
        
         reply = self.cursor.execute("SELECT username FROM clients WHERE username = ?", (username,))
-        self.connection.commit
+        self.connection.commit()
         
         if reply.fetchone() is None:
             return False
@@ -223,5 +224,10 @@ class DB_handler():
                 
         return procedures_data    
         
+    def backup_db_file(self, db_file_name: str):
+        backup_file_name = f'{db_file_name.split(".")[0]}_backup_{dt.now().strftime("%y-%m-%d_%H-%M-%S")}.sqlite'
+        shutil.copy(db_file_name, f'backups/{backup_file_name}')
+        pass
+            
         
 db = DB_handler()
