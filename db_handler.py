@@ -224,8 +224,8 @@ class DB_handler():
                 
         return procedures_data    
         
-    def backup_db_file(self, db_file_name: str):
-        backup_file_name = f'{db_file_name.split(".")[0]}_backup_{dt.now().strftime("%y-%m-%d_%H-%M-%S")}.sqlite'
+    def backup_db_file(self, db_file_name: str, description: str = ''):
+        backup_file_name = f'{db_file_name.split(".")[0]}_{description}_backup_{dt.now().strftime("%y-%m-%d_%H-%M-%S")}.sqlite'
         shutil.copy(db_file_name, f'backups/{backup_file_name}')
         pass
             

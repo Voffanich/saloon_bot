@@ -6,7 +6,7 @@ from xmlrpc.client import Boolean
 import pandas as pd
 from db_handler import db
 from client import Client
-
+from datetime import datetime as dt
 
 def validate_phone(phone_number: str) -> List [Boolean]:
     if re.fullmatch(r'[+]?375(29|33|44|25)\d{7}\b', phone_number):
@@ -103,3 +103,7 @@ def check_flag(clients: dict, id: int) -> str:
             return False
     else:
         return 'Id not found in database'
+
+def daily_db_backup(db_file_name: str):
+    if dt.now().strftime('%H') == '17':
+        db.backup_db_file(db_file_name, 'daily')

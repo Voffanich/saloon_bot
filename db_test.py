@@ -2,7 +2,7 @@ from db_handler import DB_handler
 import bot_funcs as bf
 from datetime import datetime as dt
 
-print(dt.now().strftime('%y-%m-%d_%H-%M-%S'))
+print(dt.now().strftime('%H'))
 
 
 db = DB_handler()

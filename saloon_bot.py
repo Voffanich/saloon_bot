@@ -6,7 +6,9 @@ from db_handler import db
 import keyboards as kb
 from client import Client
 
-db.backup_db_file('saloon.sqlite')
+bf.daily_db_backup('saloon.sqlite')
+
+db.backup_db_file('saloon.sqlite', 'bot_restart')
 
 bot = telebot.TeleBot(apikey)
 
@@ -194,4 +196,4 @@ def func(call):
         
     
 # Запуск бота    
-bot.polling(none_stop = True, interval = 0)
+bot.polling(none_stop = True, interval = 0, timeout=0) # изучить параметры timeout!
