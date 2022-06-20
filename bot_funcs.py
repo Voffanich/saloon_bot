@@ -1,5 +1,6 @@
 import re
 import string
+import time
 from typing import Dict, List
 from unicodedata import name
 from xmlrpc.client import Boolean
@@ -7,6 +8,7 @@ import pandas as pd
 from db_handler import db
 from client import Client
 from datetime import datetime as dt
+import schedule
 
 def validate_phone(phone_number: str) -> List [Boolean]:
     if re.fullmatch(r'[+]?375(29|33|44|25)\d{7}\b', phone_number):
@@ -104,6 +106,11 @@ def check_flag(clients: dict, id: int) -> str:
     else:
         return 'Id not found in database'
 
-def daily_db_backup(db_file_name: str):
-    if dt.now().strftime('%H') == '17':
-        db.backup_db_file(db_file_name, 'daily')
+# function for asyncronous scheduled tasks of the bot, like backups, messaging, reminders   
+def scheduled_tasks(db_file_name: str, days_to_store_backups: int):
+    # db file backup every day
+    schedule.every().day.at('02:00').do(db.backup_db_file, db_file_name, 'daily')
+    schedule.every().day.at('02:00').do(db.clear_old_db_backups, days_to_store_backups, 'backups')
+    while True:
+        schedule.run_pending()
+        time.sleep(10)

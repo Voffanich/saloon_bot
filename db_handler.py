@@ -1,10 +1,12 @@
 import copy
+import os
 import shutil
 import sqlite3
 from typing import Dict, List
 from xmlrpc.client import Boolean
 import pandas as pd
 from datetime import datetime as dt
+from datetime import timedelta
 
 class DB_handler():
     
@@ -229,5 +231,15 @@ class DB_handler():
         shutil.copy(db_file_name, f'backups/{backup_file_name}')
         pass
             
+    def clear_old_db_backups(self, days_old_to_delete: int, dirname: str):
+        dirfiles = os.listdir(dirname)
+        age = timedelta(days=days_old_to_delete)       
+        for db_file in dirfiles:
+            backup_date = db_file.split('_')[-2]
+            date = dt.strptime(backup_date, '%y-%m-%d') 
+            if date < dt.now() - age:
+                print(f'file to remove - {dirname}/{db_file}')
+                os.remove(f'{dirname}/{db_file}')
+                
         
 db = DB_handler()

@@ -5,10 +5,16 @@ import bot_funcs as bf
 from db_handler import db
 import keyboards as kb
 from client import Client
+import threading
 
-bf.daily_db_backup('saloon.sqlite')
+db_file_name = 'saloon.sqlite'
 
-db.backup_db_file('saloon.sqlite', 'bot_restart')
+# Бэкап файла БД при рестарте бота
+db.backup_db_file(db_file_name, 'bot_restart')
+
+# Создание потока с задачами по расписанию, без daemon = True поток продолжает работу после завершения работы основного скрипта
+sheduled_tasks_thread = threading.Thread(target = bf.scheduled_tasks, kwargs = {'db_file_name':db_file_name,
+                                                                                'days_to_store_backups':30}, daemon = True)
 
 bot = telebot.TeleBot(apikey)
 
@@ -196,4 +202,12 @@ def func(call):
         
     
 # Запуск бота    
-bot.polling(none_stop = True, interval = 0, timeout=0) # изучить параметры timeout!
+# bot.polling(non_stop = True, interval = 0, timeout=0) # изучить параметры timeout! non_stop или none_stop?
+
+if __name__ == '__main__':
+    sheduled_tasks_thread.start()
+    try:
+        bot.polling(non_stop = True, interval = 0, timeout = 0)
+    except:
+        pass
+    

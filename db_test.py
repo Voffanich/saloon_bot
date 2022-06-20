@@ -2,10 +2,12 @@ from db_handler import DB_handler
 import bot_funcs as bf
 from datetime import datetime as dt
 
-print(dt.now().strftime('%H'))
+
 
 
 db = DB_handler()
+
+db.clear_old_db_backups(10, 'backups')
 
 # db.setup()
 # db.update_procedures()
