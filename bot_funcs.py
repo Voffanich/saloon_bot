@@ -1,3 +1,4 @@
+import json
 import re
 import string
 import time
@@ -110,7 +111,13 @@ def check_flag(clients: dict, id: int) -> str:
 def scheduled_tasks(db_file_name: str, days_to_store_backups: int):
     # db file backup every day
     schedule.every().day.at('02:00').do(db.backup_db_file, db_file_name, 'daily')
+    # delete files of db backups older than days_to_store_backups
     schedule.every().day.at('02:00').do(db.clear_old_db_backups, days_to_store_backups, 'backups')
     while True:
         schedule.run_pending()
         time.sleep(10)
+        
+def read_config(file_name: str) -> dict:
+    with open(file_name) as config_file:
+        config = json.load(config_file)
+    return config

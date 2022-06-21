@@ -7,7 +7,12 @@ from datetime import datetime as dt
 
 db = DB_handler()
 
-db.clear_old_db_backups(10, 'backups')
+config = bf.read_config('config.json')
+
+print(config['general']['days_to_store_db_backups'])
+
+# db.clear_old_db_backups(10, 'backups')
+
 
 # db.setup()
 # db.update_procedures()
