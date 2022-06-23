@@ -7,9 +7,8 @@ from datetime import datetime as dt
 
 db = DB_handler()
 
-config = bf.read_config('config.json')
+bf.get_available_times('Маникюр')
 
-print(config['general']['days_to_store_db_backups'])
 
 # db.clear_old_db_backups(10, 'backups')
 

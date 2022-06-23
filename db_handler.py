@@ -240,6 +240,17 @@ class DB_handler():
             if date < dt.now() - age:
                 print(f'file to remove - {dirname}/{db_file}')
                 os.remove(f'{dirname}/{db_file}')
-                
+    
+    def get_procedure_timetable(self, procedure: str):
+        query = f"""
+        SELECT mon_sched, tue_sched, wed_sched, thu_sched, fri_sched, sat_sched, sun_sched 
+        FROM procedures WHERE procedure=?
+        """
+        self.cursor.execute(query, (procedure,))
+        procedure_timetable_list = list(self.cursor.fetchall()[0])
+        self.connection.commit()
+        week_days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']        
+        procedure_timetable = dict(zip(week_days, procedure_timetable_list))
+        return procedure_timetable
         
 db = DB_handler()

@@ -2,5 +2,5 @@
     "general":{
         "db_file_name": "saloon.sqlite",
         "days_to_store_db_backups": 30
-    }
+    }    
 }

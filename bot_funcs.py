@@ -5,11 +5,16 @@ import time
 from typing import Dict, List
 from unicodedata import name
 from xmlrpc.client import Boolean
+from zoneinfo import available_timezones
+from matplotlib.style import available
 import pandas as pd
 from db_handler import db
 from client import Client
 from datetime import datetime as dt
+from datetime import timedelta
+from datetime import date
 import schedule
+import ru_dates as rd
 
 def validate_phone(phone_number: str) -> List [Boolean]:
     if re.fullmatch(r'[+]?375(29|33|44|25)\d{7}\b', phone_number):
@@ -121,3 +126,40 @@ def read_config(file_name: str) -> dict:
     with open(file_name) as config_file:
         config = json.load(config_file)
     return config
+
+def get_available_times(procedure: str, days_in_future: int = 30) -> dict:
+    available_time_windows = {}
+    
+    procedures = db.get_procedures_data()
+    
+    for proc in procedures:
+        if proc['procedure'] == procedure:
+            procedure_duration = timedelta(hours = int(proc['duration'].split(':')[0]), minutes = int(proc['duration'].split(':')[1])) # format '00:00:00'
+            
+    procedure_timetable = db.get_procedure_timetable(procedure) # {'Mon': '0', 'Tue': '10:00-13:00', 'Wed': '0', 'Thu': '10:00-13:00', 'Fri': '0', 'Sat': '0', 'Sun': '0'}
+    
+    for i in range(0, days_in_future-1):
+        day_windows = []
+        day = date.today()
+        day_shift = timedelta(days = i)
+        
+        available_time = procedure_timetable[dt.strftime(day + day_shift, '%a')]
+        
+        if available_time != '0':
+            time_shift = timedelta(0)
+            time_start = available_time.split('-')[0]
+            time_finish = available_time.split('-')[1]
+            period_start = dt.strptime(f'{str(day + day_shift)} {time_start}', '%Y-%m-%d %H:%S')
+            period_finish = dt.strptime(f'{str(day + day_shift)} {time_finish}', '%Y-%m-%d %H:%S')
+            
+            time_left = period_finish - period_start
+            
+            while time_left > procedure_duration:
+                
+                window = dt.strftime(period_start + time_shift, '%H:%S')
+                day_windows.append(window)
+                
+                time_shift += procedure_duration
+                time_left = period_finish - period_start - time_shift
+            print(day_windows)    
+
