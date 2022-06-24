@@ -99,6 +99,29 @@ def procedure_id_from_name(procedures: list, procedure_name: str) -> int:
         return id
     else:
         return 'No such procedure name in database'
+
+# NOT USED??
+def procedure_duration_from_id(procedures: list, id: int) -> str:
+    """Returns procedure duration from database according to provided id
+
+    Args:
+        procedures (list): list of procedures with dictionaries with procedures parameters (copy of database table)
+        id (int): provided id of the procedure which name is needed
+
+    Returns:
+        str: duration of the procedure by it's id from database
+    """
+    duration_found = False
+    
+    for procedure in procedures:
+        if procedure['id'] == id:
+            duration = procedure['duration']
+            duration_found = True
+
+    if duration_found:
+        return duration
+    else:
+        return 'No such procedure id in database'
     
 # a crutch that helps to avoid an error of unknown id that appears on bot startup
 def check_flag(clients: dict, id: int) -> str:
@@ -143,23 +166,30 @@ def get_available_times(procedure: str, days_in_future: int = 30) -> dict:
         day = date.today()
         day_shift = timedelta(days = i)
         
+        # creating date as 'Вт, 5 июля'
+        ru_day = rd.ru_weekday_comma_date(day + day_shift)
+        
         available_time = procedure_timetable[dt.strftime(day + day_shift, '%a')]
         
         if available_time != '0':
             time_shift = timedelta(0)
             time_start = available_time.split('-')[0]
             time_finish = available_time.split('-')[1]
-            period_start = dt.strptime(f'{str(day + day_shift)} {time_start}', '%Y-%m-%d %H:%S')
-            period_finish = dt.strptime(f'{str(day + day_shift)} {time_finish}', '%Y-%m-%d %H:%S')
+            period_start = dt.strptime(f'{str(day + day_shift)} {time_start}', '%Y-%m-%d %H:%M')
+            period_finish = dt.strptime(f'{str(day + day_shift)} {time_finish}', '%Y-%m-%d %H:%M')
             
             time_left = period_finish - period_start
             
             while time_left > procedure_duration:
                 
-                window = dt.strftime(period_start + time_shift, '%H:%S')
+                window = dt.strftime(period_start + time_shift, '%H:%M')
                 day_windows.append(window)
                 
                 time_shift += procedure_duration
                 time_left = period_finish - period_start - time_shift
-            print(day_windows)    
+            
+            available_time_windows[ru_day] = day_windows
+            # print(available_time_windows)   
+            
+    return available_time_windows 
 

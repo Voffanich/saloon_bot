@@ -6,6 +6,9 @@ from db_handler import db
 import keyboards as kb
 from client import Client
 import threading
+import ru_dates as rd
+from datetime import datetime as dt
+from datetime import timedelta
 
 db_file_name = 'saloon.sqlite'
 
@@ -13,7 +16,7 @@ db_file_name = 'saloon.sqlite'
 db.backup_db_file(db_file_name, 'bot_restart')
 
 # Создание потока с задачами по расписанию, без daemon = True поток продолжает работу после завершения работы основного скрипта
-sheduled_tasks_thread = threading.Thread(target = bf.scheduled_tasks, kwargs = {'db_file_name':db_file_name,
+sсheduled_tasks_thread = threading.Thread(target = bf.scheduled_tasks, kwargs = {'db_file_name':db_file_name,
                                                                                 'days_to_store_backups':30}, daemon = True)
 
 bot = telebot.TeleBot(apikey)
@@ -187,16 +190,29 @@ def func(call):
     # занесение записи на процедуру в базу
     elif call.data.startswith('confirm_book&'):
         procedure_id = int(call.data.split('&')[1])
+        
+        # book date for message
         book_date = call.data.split('&')[2]
-        book_time = call.data.split('&')[3]        
-        procedure = bf.procedure_name_from_id(procedures, procedure_id)
+        # book time for message
+        book_time = call.data.split('&')[3]
+        # db_book_date = dt.strftime(rd.date_from_ru_weekday_comma_date(book_date), '%Y-%m-%d')
+        duration = procedures[procedure_id - 1]['duration']
+        # procedure duration as timedelta object
+        procedure_duration = timedelta(hours = int(duration.split(':')[0]), minutes = int(duration.split(':')[1]))  
+        
+        start_time = dt.strftime(rd.date_from_ru_weekday_comma_date(book_date), '%Y-%m-%d') + ' ' + call.data.split('&')[3] # str
+           
+        finish_time = dt.strftime(dt.strptime(start_time, '%Y-%m-%d  %H:%M') +  procedure_duration, '%Y-%m-%d %H:%M') #str
+                 
+        procedure = procedures[procedure_id -1]['procedure']
+        # procedure = bf.procedure_name_from_id(procedures, procedure_id)
+        
         client_name = clients[call.from_user.id].first_name + ' ' +  clients[call.from_user.id].last_name
+       
         price = int(procedures[procedure_id - 1]['price'])
-        
         mess_text = f'Отлично, вы записаны на <b>{procedure}</b> на <b>{book_date}, {book_time}</b>'
-        
-        db.add_visit(client_name, book_date, book_time, book_time, procedure, 'active', price)
-        db.show_visits()
+        db.add_visit(client_name, book_date, start_time, finish_time, procedure, 'active', price)
+        # db.show_visits()
         
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup='', parse_mode='HTML')
         
@@ -205,7 +221,7 @@ def func(call):
 # bot.polling(non_stop = True, interval = 0, timeout=0) # изучить параметры timeout! non_stop или none_stop?
 
 if __name__ == '__main__':
-    sheduled_tasks_thread.start()
+    sсheduled_tasks_thread.start()
     try:
         bot.polling(non_stop = True, interval = 0, timeout = 0)
     except:

@@ -1,13 +1,16 @@
 from db_handler import DB_handler
 import bot_funcs as bf
 from datetime import datetime as dt
+import ru_dates as rd
 
 
 
 
 db = DB_handler()
 
-bf.get_available_times('Маникюр')
+# print(rd.date_from_ru_weekday_comma_date('Вт, 5 июня'))
+
+print(bf.get_available_times('Коррекция бровей'))
 
 
 # db.clear_old_db_backups(10, 'backups')
