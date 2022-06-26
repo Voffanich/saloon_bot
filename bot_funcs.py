@@ -5,8 +5,6 @@ import time
 from typing import Dict, List
 from unicodedata import name
 from xmlrpc.client import Boolean
-from zoneinfo import available_timezones
-from matplotlib.style import available
 import pandas as pd
 from db_handler import db
 from client import Client
