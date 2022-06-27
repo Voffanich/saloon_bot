@@ -94,9 +94,9 @@ class DB_handler():
         print(reply.fetchall())
         self.connection.commit()
     
-    def client_exists(self, username: str) -> Boolean:
+    def client_exists(self, client_id: int) -> Boolean:
        
-        reply = self.cursor.execute("SELECT username FROM clients WHERE username = ?", (username,))
+        reply = self.cursor.execute("SELECT username FROM clients WHERE client_id = ?", (client_id,))
         self.connection.commit()
         
         if reply.fetchone() is None:

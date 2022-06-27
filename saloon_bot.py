@@ -76,18 +76,18 @@ def func(message):
     elif (message.text == 'Записаться'):
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         
-        clients[message.from_user.id].username = message.from_user.username
-        clients[message.from_user.id].first_name = message.from_user.first_name
-        clients[message.from_user.id].last_name = message.from_user.last_name
+        # clients[message.from_user.id].username = message.from_user.username
+        # clients[message.from_user.id].first_name = message.from_user.first_name
+        # clients[message.from_user.id].last_name = message.from_user.last_name
                 
-        if db.client_exists(clients[message.from_user.id].username):
+        if db.client_exists(message.from_user.id):
             bot.send_message(message.chat.id, text='Такс, выбрайте процедуру, на которую хотите прийти', reply_markup=kb.procedures_keyboard)
         else:
             btn1 = types.KeyboardButton("Оставляем")
             btn2 = types.KeyboardButton("Изменить имя")
             markup.add(btn1, btn2)
             bot.send_message(message.chat.id, text='Впервые здесь? Давайте-ка занесем вас в базу клиентов. '
-                                                    f'В телеграме вы подписаны как <b>{clients[message.from_user.id].first_name} {clients[message.from_user.id].last_name}</b>. '
+                                                    f'В телеграме вы подписаны как <b>{message.from_user.first_name} {message.from_user.last_name}</b>. '
                                                     'Оставляем или хотите изменить?', reply_markup=markup, parse_mode="HTML")
     
                     
@@ -133,7 +133,7 @@ def func(message):
     
     elif (message.text == 'Телефон верный'):
         bot.send_message(message.chat.id, text=f'Чудненько, сохранили вас в базе клиентов как <b>{clients[message.from_user.id].first_name} {clients[message.from_user.id].last_name}, {clients[message.from_user.id].phone_number}</b>. Теперь можете выбрать процедуру, на которую хотели бы прийти', reply_markup=kb.procedures_keyboard, parse_mode='HTML')
-        db.add_client(message.from_user.id, clients[message.from_user.id].username, clients[message.from_user.id].first_name, clients[message.from_user.id].last_name, clients[message.from_user.id].phone_number)        
+        db.add_client(message.from_user.id, message.from_user.username, clients[message.from_user.id].first_name, clients[message.from_user.id].last_name, clients[message.from_user.id].phone_number)        
         clients[message.from_user.id].flag = 'выбор процедуры'
         
         
@@ -208,6 +208,7 @@ def func(call):
         # procedure = bf.procedure_name_from_id(procedures, procedure_id)
         
         client_name = clients[call.from_user.id].first_name + ' ' +  clients[call.from_user.id].last_name
+        print(clients[call.from_user.id].first_name)
        
         price = int(procedures[procedure_id - 1]['price'])
         mess_text = f'Отлично, вы записаны на <b>{procedure}</b> на <b>{book_date}, {book_time}</b>'

@@ -13,6 +13,7 @@ from datetime import timedelta
 from datetime import date
 import schedule
 import ru_dates as rd
+import portion as p
 
 def validate_phone(phone_number: str) -> List [Boolean]:
     if re.fullmatch(r'[+]?375(29|33|44|25)\d{7}\b', phone_number):
@@ -191,3 +192,35 @@ def get_available_times(procedure: str, days_in_future: int = 30) -> dict:
             
     return available_time_windows 
 
+def get_available_times_2(procedures: dict, procedure_id: int, days_in_future: int = 30) -> dict:
+    available_time_windows = {}
+    procedure_name = procedures[procedure_id - 1]['procedure']
+    
+    procedure_duration = timedelta(hours = int(procedures[procedure_id - 1]['duration'].split(':')[0]), 
+                                   minutes = int(procedures[procedure_id - 1]['duration'].split(':')[1])) # format '00:00:00'
+    procedure_timetable = db.get_procedure_timetable(procedure_name) # {'Mon': '0', 'Tue': '10:00-13:00', 'Wed': '0', 'Thu': '10:00-13:00', 'Fri': '0', 'Sat': '0', 'Sun': '0'}
+    
+    for i in range(0, days_in_future-1):
+        day_windows = []
+        day = date.today()
+        day_shift = timedelta(days = i)
+        
+        # creating date as 'Вт, 5 июля'
+        ru_day = rd.ru_weekday_comma_date(day + day_shift)
+        
+        # available time period for booking of current procedure ('10:00-13:00') %a - a weekday name in format Mon, Tue, etc.
+        available_time = procedure_timetable[dt.strftime(day + day_shift, '%a')]
+        
+        if available_time != '0':
+            time_shift = timedelta(0)
+            
+            
+            time_start = available_time.split('-')[0]
+            time_finish = available_time.split('-')[1]
+            
+            available_period = p.closed(dt.strptime(str(day + day_shift) + time_start, '%Y-%m-%d%H:%M'), dt.strptime(str(day + day_shift) + time_finish, '%Y-%m-%d%H:%M'))
+            print(available_period)
+            
+            
+    return available_time_windows
+    

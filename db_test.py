@@ -1,23 +1,28 @@
 from db_handler import DB_handler
 import bot_funcs as bf
 from datetime import datetime as dt
+from datetime import date
 import ru_dates as rd
 
 
 
 
 db = DB_handler()
+procedures = db.get_procedures_data()
+
 
 # print(rd.date_from_ru_weekday_comma_date('Вт, 5 июня'))
 
-print(bf.get_available_times('Коррекция бровей'))
+# print(bf.get_available_times('Коррекция бровей'))
+print(bf.get_available_times_2(procedures, 1))
 
 
 # db.clear_old_db_backups(10, 'backups')
 
-
+# RECREATE DB
 # db.setup()
 # db.update_procedures()
+
 # print(db.get_procedures_data())
 
 # procedures = db.get_procedures_data()
