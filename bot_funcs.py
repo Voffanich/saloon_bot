@@ -149,16 +149,16 @@ def read_config(file_name: str) -> dict:
         config = json.load(config_file)
     return config
 
-def get_available_times(procedure: str, days_in_future: int = 30) -> dict:
+def get_available_times(procedure_id: int, days_in_future: int = 30) -> dict:
     available_time_windows = {}
     
     procedures = db.get_procedures_data()
-    
+        
     for proc in procedures:
-        if proc['procedure'] == procedure:
+        if proc['id'] == procedure_id:
             procedure_duration = timedelta(hours = int(proc['duration'].split(':')[0]), minutes = int(proc['duration'].split(':')[1])) # format '00:00:00'
             
-    procedure_timetable = db.get_procedure_timetable(procedure) # {'Mon': '0', 'Tue': '10:00-13:00', 'Wed': '0', 'Thu': '10:00-13:00', 'Fri': '0', 'Sat': '0', 'Sun': '0'}
+    procedure_timetable = db.get_procedure_timetable(procedure_id) # {'Mon': '0', 'Tue': '10:00-13:00', 'Wed': '0', 'Thu': '10:00-13:00', 'Fri': '0', 'Sat': '0', 'Sun': '0'}
     
     for i in range(0, days_in_future-1):
         day_windows = []

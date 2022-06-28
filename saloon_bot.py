@@ -112,6 +112,8 @@ def func(message):
         
         
     elif (message.text == 'Оставляем'):
+        clients[message.from_user.id].first_name = message.from_user.first_name
+        clients[message.from_user.id].last_name = message.from_user.last_name
         bot.send_message(message.chat.id, text='Хорошо. Теперь введите ваш номер телефона в формате +375хх без пробелов и дефисов', reply_markup='')
         clients[message.from_user.id].flag = 'проверить телефон'        
         
@@ -156,9 +158,11 @@ def func(message):
 @bot.callback_query_handler(func=lambda call: True)
 def func(call):
     # вывод доступных для посещения дней для выбранной процедуры
-    if 'procedure=' in call.data:
-        procedure = call.data.split('=')[1]
-        clients[call.from_user.id].chosen_procedure = procedure
+    if 'procedure_id=' in call.data:
+        procedure_id = int(call.data.split('=')[1])
+        clients[call.from_user.id].chosen_procedure_id = procedure_id
+        clients[call.from_user.id].chosen_procedure = bf.procedure_name_from_id(procedures, procedure_id)
+        clients[call.from_user.id].dates = bf.get_available_times(procedure_id)
         dates_keyboard = kb.create_dates_keyboard(clients[call.from_user.id].dates)
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=f'Выберите день, на который можно записаться на <b>{clients[call.from_user.id].chosen_procedure}</b>', reply_markup=dates_keyboard, parse_mode='HTML')
     
@@ -168,12 +172,12 @@ def func(call):
     
     # возврат в главное меню бота
     elif call.data == 'Главное меню':
-        bot.send_message(chat_id=call.message.chat.id, text='Главне меню', reply_markup=kb.main_keyboard)
+        bot.send_message(chat_id=call.message.chat.id, text='Главное меню', reply_markup=kb.main_keyboard)
     
     # вывод доступных для записи времен (окон)    
     elif call.data.startswith('day='):
         day = call.data.split('=')[1]        
-        times_keyboard = kb.create_times_keyboard(clients[call.from_user.id].dates, day, clients[call.from_user.id].chosen_procedure)
+        times_keyboard = kb.create_times_keyboard(clients[call.from_user.id].dates, day, clients[call.from_user.id].chosen_procedure_id)
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Выберите подходящее время из доступных на <b>' + day + '</b>', reply_markup=times_keyboard, parse_mode='HTML')
     
     # подтверждение записи на выбранное время
@@ -192,7 +196,7 @@ def func(call):
         procedure_id = int(call.data.split('&')[1])
         
         # book date for message
-        book_date = call.data.split('&')[2]
+        ru_visit_date = call.data.split('&')[2]
         # book time for message
         book_time = call.data.split('&')[3]
         # db_book_date = dt.strftime(rd.date_from_ru_weekday_comma_date(book_date), '%Y-%m-%d')
@@ -200,23 +204,24 @@ def func(call):
         # procedure duration as timedelta object
         procedure_duration = timedelta(hours = int(duration.split(':')[0]), minutes = int(duration.split(':')[1]))  
         
-        start_time = dt.strftime(rd.date_from_ru_weekday_comma_date(book_date), '%Y-%m-%d') + ' ' + call.data.split('&')[3] # str
+        start_time = dt.strftime(rd.date_from_ru_weekday_comma_date(ru_visit_date), '%Y-%m-%d') + ' ' + call.data.split('&')[3] # str
            
         finish_time = dt.strftime(dt.strptime(start_time, '%Y-%m-%d  %H:%M') +  procedure_duration, '%Y-%m-%d %H:%M') #str
+        
+        book_date = dt.strftime(dt.now(), '%Y-%m-%d %H:%M')
                  
         procedure = procedures[procedure_id -1]['procedure']
         # procedure = bf.procedure_name_from_id(procedures, procedure_id)
         
         client_name = clients[call.from_user.id].first_name + ' ' +  clients[call.from_user.id].last_name
-        print(clients[call.from_user.id].first_name)
        
         price = int(procedures[procedure_id - 1]['price'])
-        mess_text = f'Отлично, вы записаны на <b>{procedure}</b> на <b>{book_date}, {book_time}</b>'
-        db.add_visit(client_name, book_date, start_time, finish_time, procedure, 'active', price)
+        mess_text = f'Отлично, вы записаны на <b>{procedure}</b> на <b>{ru_visit_date}, {book_time}</b>'
+        db.add_visit(client_name, book_date, ru_visit_date, start_time, finish_time, procedure_id, 'active', price)
         # db.show_visits()
         
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup='', parse_mode='HTML')
-        
+        bot.send_message(chat_id=call.message.chat.id, text='Главное меню', reply_markup=kb.main_keyboard)
     
 # Запуск бота    
 # bot.polling(non_stop = True, interval = 0, timeout=0) # изучить параметры timeout! non_stop или none_stop?

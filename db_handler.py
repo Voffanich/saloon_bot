@@ -23,27 +23,37 @@ class DB_handler():
             first_name TEXT,
             last_name TEXT,
             phone_number TEXT,
+            reg_date TEXT,
             visits_counter INT,
             timing TEXT,
             last_visit TEXT,
             active TEXT,
             discount INT);
             """
-        self.cursor.execute(query)
-        self.connection.commit()
+        try:    
+            self.cursor.execute(query)
+            self.connection.commit()
+        except sqlite3.Error as error:
+            print('SQLite error: ', error)
+            return error
         
         query = """CREATE TABLE IF NOT EXISTS visits (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             client_name TEXT,
-            date TEXT,
+            book_date TEXT,
+            visit_date TEXT,
             start_time TEXT,
             finish_time TEXT,
-            procedure TEXT,
+            procedure_id INT,
             price INT,
             status TEXT);
             """
-        self.cursor.execute(query)
-        self.connection.commit()
+        try:    
+            self.cursor.execute(query)
+            self.connection.commit()
+        except sqlite3.Error as error:
+            print('SQLite error: ', error)
+            return error
         
         query = """CREATE TABLE IF NOT EXISTS procedures (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,36 +68,43 @@ class DB_handler():
             sat_sched TEXT,
             sun_sched TEXT);
             """
-        self.cursor.execute(query)
-        self.connection.commit()
+        try:    
+            self.cursor.execute(query)
+            self.connection.commit()
+        except sqlite3.Error as error:
+            print('SQLite error: ', error)
+            return error
         
     def add_client(self, client_id: str, username: str, first_name: str = '', last_name: str = '', phone_number: str = '', timing: str = '2:30', last_visit: str = '', active: str = 'true', discount: int = 0):
         visits_counter = 0
         timing = '2:30'
         
         query = f"""
-        INSERT INTO clients (client_id, username, first_name, last_name, phone_number, visits_counter, timing, last_visit, active, discount)
-        VALUES ('{client_id}', '{username}', '{first_name}', '{last_name}', '{phone_number}', {visits_counter}, '{timing}', '{last_visit}', '{active}', '{discount}');        
+        INSERT INTO clients (client_id, username, first_name, last_name, phone_number, reg_date, visits_counter, timing, last_visit, active, discount)
+        VALUES ('{client_id}', '{username}', '{first_name}', '{last_name}', '{phone_number}', '{dt.strftime(dt.now(), '%Y-%m-%d %H:%M')}', 
+        {visits_counter}, '{timing}', '{last_visit}', '{active}', '{discount}');        
         """
-        self.cursor.execute(query)
-        self.connection.commit()
-        
-    # ПЕРЕСМОТРЕТЬ ИМЕНА СТОЛБЦОВ
-    def add_visit(self, client_name: str, date: str, start_time: str, finish_time: str, procedure: str, status: str, price: int = 35):
-        # print(client_name, date, start_time, finish_time, procedure, status, price)
-        query = """
-        INSERT INTO visits (client_name, date, start_time, finish_time, procedure, price, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?) 
-        """
-        # VALUES (?, ?, ?, ?, ?, ?, ?) 
-        # VALUES ('name', '23 june', '10:00', '12:00', 'Manicure', 32, 'active') 
-        
-        try:
-            # self.cursor.execute(query)
-            self.cursor.execute(query, (client_name, date, start_time, finish_time, procedure, price, status, ))
+        try:    
+            self.cursor.execute(query)
             self.connection.commit()
         except sqlite3.Error as error:
             print('SQLite error: ', error)
+            return error
+            
+    # ПЕРЕСМОТРЕТЬ ИМЕНА СТОЛБЦОВ
+    def add_visit(self, client_name: str, book_date: str, visit_date: str, start_time: str, finish_time: str, procedure_id: int, status: str, price: int = 35):
+        # print(client_name, date, start_time, finish_time, procedure, status, price)
+        query = """
+        INSERT INTO visits (client_name, book_date, visit_date, start_time, finish_time, procedure_id, price, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?) 
+        """
+        try:
+            # self.cursor.execute(query)
+            self.cursor.execute(query, (client_name, book_date, visit_date, start_time, finish_time, procedure_id, price, status, ))
+            self.connection.commit()
+        except sqlite3.Error as error:
+            print('SQLite error: ', error)
+            return error
     
     def show_visits(self) -> list:
         reply = self.cursor.execute("SELECT * FROM visits")
@@ -241,16 +258,39 @@ class DB_handler():
                 print(f'file to remove - {dirname}/{db_file}')
                 os.remove(f'{dirname}/{db_file}')
     
-    def get_procedure_timetable(self, procedure: str):
+    def get_procedure_timetable(self, procedure_id: int):
         query = f"""
         SELECT mon_sched, tue_sched, wed_sched, thu_sched, fri_sched, sat_sched, sun_sched 
-        FROM procedures WHERE procedure=?
+        FROM procedures WHERE id=?
         """
-        self.cursor.execute(query, (procedure,))
-        procedure_timetable_list = list(self.cursor.fetchall()[0])
-        self.connection.commit()
+        
+        try:    
+            self.cursor.execute(query, (procedure_id, ))
+            procedure_timetable_list = list(self.cursor.fetchall()[0])
+            self.connection.commit()
+        except sqlite3.Error as error:
+            print('SQLite error: ', error)
+            return error
+        
         week_days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']        
         procedure_timetable = dict(zip(week_days, procedure_timetable_list))
         return procedure_timetable
+        
+    def get_booked_periods(self, procedure_id: int, days_in_the_future: int = 30) -> list:
+        query = f"""
+        SELECT procedure_id, start_time, finish_time 
+        FROM visits WHERE start_time BETWEEN datetime('now') AND datetime('now', '+{days_in_the_future} days') AND procedure_id = ?
+        """
+        try:    
+            self.cursor.execute(query, (procedure_id, ))
+            result = self.cursor.fetchall()
+            self.connection.commit()
+        except sqlite3.Error as error:
+            print('SQLite error: ', error)
+            return error
+        
+        
+        print(result)
+        
         
 db = DB_handler()

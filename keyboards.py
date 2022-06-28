@@ -1,4 +1,3 @@
-import sys
 from telebot import types
 import bot_funcs as bf
 from db_handler import db
@@ -8,7 +7,8 @@ from db_handler import db
 procedures_keyboard = types.InlineKeyboardMarkup(row_width=1)
 # procedures = db.get_procedures_db()
 procedures = db.get_procedures_db()
-btns = [types.InlineKeyboardButton(procedure, callback_data=f'procedure={procedure}') for procedure in procedures]
+procedures_list = db.get_procedures_data()
+btns = [types.InlineKeyboardButton(procedure, callback_data=f'procedure_id={bf.procedure_id_from_name(procedures_list, procedure)}') for procedure in procedures]
 btns.append(types.InlineKeyboardButton('Главное меню', callback_data='Главное меню'))
 procedures_keyboard.add(*btns)
 
@@ -41,7 +41,7 @@ def create_confirm_book_keyboard(procedures: list, procedure: str, booked_date: 
     return confirm_book_keyboard
 
 # клавиатура, выводящие достуаные времена для записи в выбранный день
-def create_times_keyboard(dates: dict, day: str, procedure: str)  -> types.InlineKeyboardMarkup:  
+def create_times_keyboard(dates: dict, day: str, procedure_id: int)  -> types.InlineKeyboardMarkup:  
     """    
     Function creates keyboard with available times for booking.
     
@@ -59,7 +59,7 @@ def create_times_keyboard(dates: dict, day: str, procedure: str)  -> types.Inlin
     for time in dates[day]:        
         btns.append(types.InlineKeyboardButton(time, callback_data = f'daytime&{day}&{time}'))
         
-    btns.append(types.InlineKeyboardButton('Выбрать другой день', callback_data=f'procedure={procedure}'))
+    btns.append(types.InlineKeyboardButton('Выбрать другой день', callback_data=f'procedure_id={procedure_id}'))
     proc_slice = slice(0, len(btns)-1, 1)   # создание среза из списка кнопок, все кнопки кроме последней
     times_keyboard.add(*btns[proc_slice])   # добавление самовыравнивающейся клавиатуры из времен, кроме последней кнопки
     times_keyboard.row(btns[-1])            # добавление отдельным рядом кнопки "вернуться к выбору дня"
