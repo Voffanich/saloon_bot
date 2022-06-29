@@ -11,6 +11,7 @@ from datetime import datetime as dt
 from datetime import timedelta
 
 db_file_name = 'saloon.sqlite'
+config = bf.read_config('config.json')
 
 # Бэкап файла БД при рестарте бота
 db.backup_db_file(db_file_name, 'bot_restart')
@@ -162,7 +163,7 @@ def func(call):
         procedure_id = int(call.data.split('=')[1])
         clients[call.from_user.id].chosen_procedure_id = procedure_id
         clients[call.from_user.id].chosen_procedure = bf.procedure_name_from_id(procedures, procedure_id)
-        clients[call.from_user.id].dates = bf.get_available_times(procedure_id)
+        clients[call.from_user.id].dates = bf.get_available_times_2(procedures, procedure_id, config['general']['days_to_show_booktimes'])
         dates_keyboard = kb.create_dates_keyboard(clients[call.from_user.id].dates)
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=f'Выберите день, на который можно записаться на <b>{clients[call.from_user.id].chosen_procedure}</b>', reply_markup=dates_keyboard, parse_mode='HTML')
     

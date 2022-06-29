@@ -7,6 +7,7 @@ from xmlrpc.client import Boolean
 import pandas as pd
 from datetime import datetime as dt
 from datetime import timedelta
+import portion as p
 
 class DB_handler():
     
@@ -276,21 +277,25 @@ class DB_handler():
         procedure_timetable = dict(zip(week_days, procedure_timetable_list))
         return procedure_timetable
         
-    def get_booked_periods(self, procedure_id: int, days_in_the_future: int = 30) -> list:
+    def get_occupied_periods(self, days_in_the_future: int = 30) -> list:
         query = f"""
         SELECT procedure_id, start_time, finish_time 
-        FROM visits WHERE start_time BETWEEN datetime('now') AND datetime('now', '+{days_in_the_future} days') AND procedure_id = ?
+        FROM visits WHERE start_time BETWEEN datetime('now') AND datetime('now', '+{days_in_the_future} days')
         """
         try:    
-            self.cursor.execute(query, (procedure_id, ))
+            self.cursor.execute(query)
             result = self.cursor.fetchall()
             self.connection.commit()
         except sqlite3.Error as error:
             print('SQLite error: ', error)
             return error
         
+        occupied_periods = []
         
-        print(result)
+        for period in result:
+            occupied_periods.append(p.closed(dt.strptime(period[1], '%Y-%m-%d %H:%M'), dt.strptime(period[2], '%Y-%m-%d %H:%M')))
+        
+        return occupied_periods
         
         
 db = DB_handler()

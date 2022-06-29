@@ -11,15 +11,17 @@ import ru_dates as rd
 # db.setup()
 # db.update_procedures()
 
-# procedures = db.get_procedures_data()
+procedures = db.get_procedures_data()
 
-# db.get_booked_periods(1, 365)
+# db.get_occupied_periods(1, 30)
 
 # print(rd.date_from_ru_weekday_comma_date('Вт, 5 июня'))
 
 # print(bf.get_available_times(1))
-# print(bf.get_available_times_2(procedures, 1))
-
+# print(bf.get_available_times_2(procedures, 2))
+timetable = bf.get_available_times_2(procedures, 1, 30)
+for key in timetable:
+    print(key, timetable[key])
 
 # db.clear_old_db_backups(10, 'backups')
 
