@@ -148,52 +148,9 @@ def read_config(file_name: str) -> dict:
         config = json.load(config_file)
     return config
 
-def get_available_times(procedure_id: int, days_in_future: int = 30) -> dict:
+def get_available_times(procedures: dict, procedure_id: int, days_in_future: int = 30, minute_time_gap: int = 30) -> dict:
     available_time_windows = {}
-    
-    procedures = db.get_procedures_data()
-        
-    for proc in procedures:
-        if proc['id'] == procedure_id:
-            procedure_duration = timedelta(hours = int(proc['duration'].split(':')[0]), minutes = int(proc['duration'].split(':')[1])) # format '00:00:00'
-            
-    procedure_timetable = db.get_procedure_timetable(procedure_id) # {'Mon': '0', 'Tue': '10:00-13:00', 'Wed': '0', 'Thu': '10:00-13:00', 'Fri': '0', 'Sat': '0', 'Sun': '0'}
-    
-    for i in range(0, days_in_future-1):
-        day_windows = []
-        day = date.today()
-        day_shift = timedelta(days = i)
-        
-        # creating date as 'Вт, 5 июля'
-        ru_day = rd.ru_weekday_comma_date(day + day_shift)
-        
-        available_day_period = procedure_timetable[dt.strftime(day + day_shift, '%a')]
-        
-        if available_day_period != '0':
-            time_shift = timedelta(0)
-            time_start = available_day_period.split('-')[0]
-            time_finish = available_day_period.split('-')[1]
-            period_start = dt.strptime(f'{str(day + day_shift)} {time_start}', '%Y-%m-%d %H:%M')
-            period_finish = dt.strptime(f'{str(day + day_shift)} {time_finish}', '%Y-%m-%d %H:%M')
-            
-            time_left = period_finish - period_start
-            
-            while time_left > procedure_duration:
-                
-                window = dt.strftime(period_start + time_shift, '%H:%M')
-                day_windows.append(window)
-                
-                time_shift += procedure_duration
-                time_left = period_finish - period_start - time_shift
-            
-            available_time_windows[ru_day] = day_windows
-            # print(available_time_windows)   
-            
-    return available_time_windows 
-
-def get_available_times_2(procedures: dict, procedure_id: int, days_in_future: int = 30) -> dict:
-    available_time_windows = {}
-    procedure_name = procedures[procedure_id - 1]['procedure']
+    time_gap = timedelta(0)
     
     procedure_duration = timedelta(hours = int(procedures[procedure_id - 1]['duration'].split(':')[0]), 
                                    minutes = int(procedures[procedure_id - 1]['duration'].split(':')[1])) # format '00:00:00'
@@ -205,19 +162,22 @@ def get_available_times_2(procedures: dict, procedure_id: int, days_in_future: i
     for i in range(0, days_in_future):
         day_windows = []
         day = date.today()
-        day_shift = timedelta(days = i)
+        day_shift = timedelta(days = i)        
+        
+        if i == 0:
+            time_gap = timedelta(minutes = minute_time_gap)
         
         # creating date as 'Вт, 5 июля'
         ru_day = rd.ru_weekday_comma_date(day + day_shift)
-        
           
         # available time period for booking of current procedure ('10:00-13:00') %a - a weekday name in format Mon, Tue, etc.
         available_day_period = procedure_timetable[dt.strftime(day + day_shift, '%a')]
-        print(type(available_day_period))
-        print(f'day + day_shift = {dt.strftime(day + day_shift, "%a")}')
         
         if available_day_period != '0':
             time_shift = timedelta(0)
+            # time adjustment is used for adjusting time shift in case when estimated window intersects the occupied period from bottom
+            # and the upper bound of the window is withing occupied period or above the upper bound of occupied period
+            time_adjustment = timedelta(0)
             
             day_period_start = available_day_period.split('-')[0]
             day_period_finish = available_day_period.split('-')[1]
@@ -226,32 +186,32 @@ def get_available_times_2(procedures: dict, procedure_id: int, days_in_future: i
             available_period = p.closed(dt.strptime(str(day + day_shift) + day_period_start, '%Y-%m-%d%H:%M'), dt.strptime(str(day + day_shift) + day_period_finish, '%Y-%m-%d%H:%M'))
             
             time_left = available_period.upper - available_period.lower
+            print(f'time_left beginning of day: {time_left}')
             
             while time_left > procedure_duration:
                 
                 window = p.open(available_period.lower + time_shift, available_period.lower + time_shift + procedure_duration)
-                # print(f'window: {dt.strftime(window.lower, "%Y-%m-%d %H:%M")} - {dt.strftime(window.upper, "%H:%M")}')      
-                         
-                
+                print(f'window: {dt.strftime(window.lower, "%Y-%m-%d %H:%M")} - {dt.strftime(window.upper, "%H:%M")}')      
+                print(f'time shift - {time_shift}')
+                print(f'procedure duration {procedure_duration}')
                 
                 window_occupied = False
+                
                 for occupied_period in occupied_periods:
-                    if not (window < occupied_period or window > occupied_period):
+                    if not window < occupied_period and not window > occupied_period:
                         window_occupied = True
-                        # print(f"""intersection of periods found. window: {dt.strftime(window.lower, "%Y-%m-%d %H:%M")} - {dt.strftime(window.upper, "%H:%M")}, 
-                            #   occupied period: {dt.strftime(occupied_period.lower, "%Y-%m-%d %H:%M")} - {dt.strftime(occupied_period.upper, "%H:%M")}""" )
-                        if window <= occupied_period:
-                            time_shift += occupied_period.upper - window.lower
-                            print(f'time shift in intersection - {time_shift}')
-                    else:
-                        time_shift += procedure_duration    
+                        print(f'{window_occupied=}')
+                        time_adjustment = occupied_period.upper - window.upper
+                        
+                time_shift += procedure_duration + time_adjustment
+                time_left -= procedure_duration + time_adjustment
                 
-                time_left -= time_shift
+                print(f'time shift 2 {time_shift}')
+                print(f'time left {time_left}')
                             
-                if not window_occupied:
-                     day_windows.append(dt.strftime(window.lower, '%H:%M'))
-                     
-                
+                if not window_occupied and window.lower > dt.now() + time_gap:
+                    day_windows.append(dt.strftime(window.lower, '%H:%M'))
+                    
                     
             print(ru_day, day_windows, '\n')
             
@@ -260,5 +220,3 @@ def get_available_times_2(procedures: dict, procedure_id: int, days_in_future: i
             
     return available_time_windows
     
-def get_free_time_windows(occupied_periods: list):
-    pass

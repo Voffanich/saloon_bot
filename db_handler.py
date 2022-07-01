@@ -16,6 +16,7 @@ class DB_handler():
         self.connection = sqlite3.connect(dbname, check_same_thread=False)
         self.cursor = self.connection.cursor()
         self.flag = ''
+        # self.connection.set_trace_callback(print)
         
     def setup(self):
         query = """CREATE TABLE IF NOT EXISTS clients (
@@ -82,11 +83,11 @@ class DB_handler():
         
         query = f"""
         INSERT INTO clients (client_id, username, first_name, last_name, phone_number, reg_date, visits_counter, timing, last_visit, active, discount)
-        VALUES ('{client_id}', '{username}', '{first_name}', '{last_name}', '{phone_number}', '{dt.strftime(dt.now(), '%Y-%m-%d %H:%M')}', 
-        {visits_counter}, '{timing}', '{last_visit}', '{active}', '{discount}');        
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);        
         """
         try:    
-            self.cursor.execute(query)
+            self.cursor.execute(query, (client_id, username, first_name, last_name, phone_number, dt.strftime(dt.now(), '%Y-%m-%d %H:%M'),
+                                        visits_counter, timing, last_visit, active, discount))
             self.connection.commit()
         except sqlite3.Error as error:
             print('SQLite error: ', error)
@@ -209,14 +210,14 @@ class DB_handler():
         return procedure_id[0][0]       
     
     # NOT USED
-    def procedure_name_from_id(self, id: int) -> str:
+    def procedure_name_from_id(self, proc_id: int) -> str:
         """
         Returns the name of procedure (string) according to the provided id (int)
         """
         query = f"""
         SELECT procedure FROM procedures WHERE id=?
         """
-        self.cursor.execute(query, (id,))
+        self.cursor.execute(query, (proc_id,))
         procedure_name = self.cursor.fetchall()       
         self.connection.commit()        
                     
@@ -280,10 +281,10 @@ class DB_handler():
     def get_occupied_periods(self, days_in_the_future: int = 30) -> list:
         query = f"""
         SELECT procedure_id, start_time, finish_time 
-        FROM visits WHERE start_time BETWEEN datetime('now') AND datetime('now', '+{days_in_the_future} days')
-        """
+        FROM visits WHERE start_time BETWEEN datetime('now') AND datetime('now', ?)
+        """ 
         try:    
-            self.cursor.execute(query)
+            self.cursor.execute(query, (f'+{days_in_the_future} days', ))
             result = self.cursor.fetchall()
             self.connection.commit()
         except sqlite3.Error as error:

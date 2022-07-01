@@ -10,14 +10,13 @@ import ru_dates as rd
 from datetime import datetime as dt
 from datetime import timedelta
 
-db_file_name = 'saloon.sqlite'
-config = bf.read_config('config.json')
+cfg_general = bf.read_config('config.json')['general']
 
 # Бэкап файла БД при рестарте бота
-db.backup_db_file(db_file_name, 'bot_restart')
+db.backup_db_file(cfg_general['db_file_name'], 'bot_restart')
 
 # Создание потока с задачами по расписанию, без daemon = True поток продолжает работу после завершения работы основного скрипта
-sсheduled_tasks_thread = threading.Thread(target = bf.scheduled_tasks, kwargs = {'db_file_name':db_file_name,
+sсheduled_tasks_thread = threading.Thread(target = bf.scheduled_tasks, kwargs = {'db_file_name':cfg_general['db_file_name'],
                                                                                 'days_to_store_backups':30}, daemon = True)
 
 bot = telebot.TeleBot(apikey)
@@ -163,7 +162,8 @@ def func(call):
         procedure_id = int(call.data.split('=')[1])
         clients[call.from_user.id].chosen_procedure_id = procedure_id
         clients[call.from_user.id].chosen_procedure = bf.procedure_name_from_id(procedures, procedure_id)
-        clients[call.from_user.id].dates = bf.get_available_times_2(procedures, procedure_id, config['general']['days_to_show_booktimes'])
+        clients[call.from_user.id].dates = bf.get_available_times(procedures, procedure_id, cfg_general['days_to_show_booktimes'],
+                                                                  cfg_general['mins_to_nearest_book'])
         dates_keyboard = kb.create_dates_keyboard(clients[call.from_user.id].dates)
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=f'Выберите день, на который можно записаться на <b>{clients[call.from_user.id].chosen_procedure}</b>', reply_markup=dates_keyboard, parse_mode='HTML')
     
