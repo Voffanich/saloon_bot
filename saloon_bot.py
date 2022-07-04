@@ -161,11 +161,13 @@ def func(call):
     if 'procedure_id=' in call.data:
         procedure_id = int(call.data.split('=')[1])
         clients[call.from_user.id].chosen_procedure_id = procedure_id
-        clients[call.from_user.id].chosen_procedure = bf.procedure_name_from_id(procedures, procedure_id)
-        clients[call.from_user.id].dates = bf.get_available_times(procedures, procedure_id, cfg_general['days_to_show_booktimes'],
-                                                                  cfg_general['mins_to_nearest_book'])
-        dates_keyboard = kb.create_dates_keyboard(clients[call.from_user.id].dates)
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=f'Выберите день, на который можно записаться на <b>{clients[call.from_user.id].chosen_procedure}</b>', reply_markup=dates_keyboard, parse_mode='HTML')
+        procedure_name = procedures[procedure_id - 1]['procedure']
+        dates = bf.get_available_times(procedures, procedure_id, cfg_general['days_to_show_booktimes'],
+                                                                 cfg_general['mins_to_nearest_book'])
+        dates_keyboard = kb.create_dates_keyboard(dates)
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
+                              text=f'Выберите день, на который можно записаться на <b>{procedure_name}</b>', 
+                              reply_markup=dates_keyboard, parse_mode='HTML')
     
     # вывод доступных для посещения процедур    
     elif call.data == 'choose_procedure':
@@ -177,20 +179,33 @@ def func(call):
     
     # вывод доступных для записи времен (окон)    
     elif call.data.startswith('day='):
-        day = call.data.split('=')[1]        
-        times_keyboard = kb.create_times_keyboard(clients[call.from_user.id].dates, day, clients[call.from_user.id].chosen_procedure_id)
+        day = call.data.split('=')[1]  
+        procedure_id = clients[call.from_user.id].chosen_procedure_id
+        dates = bf.get_available_times(procedures, procedure_id, cfg_general['days_to_show_booktimes'],
+                                                                         cfg_general['mins_to_nearest_book'])     
+        times_keyboard = kb.create_times_keyboard(dates, day, clients[call.from_user.id].chosen_procedure_id)
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Выберите подходящее время из доступных на <b>' + day + '</b>', reply_markup=times_keyboard, parse_mode='HTML')
     
     # подтверждение записи на выбранное время
     elif call.data.startswith('daytime&'):
-        book_date = call.data.split('&')[1]
+        book_date_ru = call.data.split('&')[1]
         book_time = call.data.split('&')[2]
-        procedure = clients[call.from_user.id].chosen_procedure 
-        booked_date = book_date + '&' + book_time
+        procedure_id = clients[call.from_user.id].chosen_procedure_id
+        procedure_duration = procedures[procedure_id - 1]['duration'] 
+        booked_date_ru = book_date_ru + '&' + book_time
         
-        mess_text = f'Записываю вас на <b>{book_date}, {book_time}</b>?'
-        confirm_book_keyboard = kb.create_confirm_book_keyboard(procedures, procedure, booked_date)
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup=confirm_book_keyboard, parse_mode='HTML') 
+        booked_date = dt.strptime(dt.strftime(rd.date_from_ru_weekday_comma_date(book_date_ru), '%Y-%m-%d') + book_time, '%Y-%m-%d%H:%M')
+        
+        if bf.window_occupied(booked_date, procedure_duration, cfg_general['days_to_show_booktimes']):
+            mess_text = f'К сожалению, на это время кто-то уже успел записаться. Посмотрите, пожалуйста, другие варианты'
+            dates = bf.get_available_times(procedures, procedure_id, cfg_general['days_to_show_booktimes'],
+                                                                 cfg_general['mins_to_nearest_book'])
+            dates_keyboard = kb.create_dates_keyboard(dates)
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup=dates_keyboard, parse_mode='HTML')
+        else:    
+            mess_text = f'Записываю вас на <b>{book_date_ru}, {book_time}</b>?'
+            confirm_book_keyboard = kb.create_confirm_book_keyboard(procedures, procedure_id, booked_date_ru)
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup=confirm_book_keyboard, parse_mode='HTML') 
     
     # занесение записи на процедуру в базу
     elif call.data.startswith('confirm_book&'):
@@ -200,7 +215,7 @@ def func(call):
         ru_visit_date = call.data.split('&')[2]
         # book time for message
         book_time = call.data.split('&')[3]
-        # db_book_date = dt.strftime(rd.date_from_ru_weekday_comma_date(book_date), '%Y-%m-%d')
+        # db_book_date = dt.strftime(rd.date_from_ru_weekday_comma_date(book_date_ru), '%Y-%m-%d')
         duration = procedures[procedure_id - 1]['duration']
         # procedure duration as timedelta object
         procedure_duration = timedelta(hours = int(duration.split(':')[0]), minutes = int(duration.split(':')[1]))  
@@ -209,7 +224,7 @@ def func(call):
            
         finish_time = dt.strftime(dt.strptime(start_time, '%Y-%m-%d  %H:%M') +  procedure_duration, '%Y-%m-%d %H:%M') #str
         
-        book_date = dt.strftime(dt.now(), '%Y-%m-%d %H:%M')
+        book_date_ru = dt.strftime(dt.now(), '%Y-%m-%d %H:%M')
                  
         procedure = procedures[procedure_id -1]['procedure']
         # procedure = bf.procedure_name_from_id(procedures, procedure_id)
@@ -218,7 +233,7 @@ def func(call):
        
         price = int(procedures[procedure_id - 1]['price'])
         mess_text = f'Отлично, вы записаны на <b>{procedure}</b> на <b>{ru_visit_date}, {book_time}</b>'
-        db.add_visit(client_name, book_date, ru_visit_date, start_time, finish_time, procedure_id, 'active', price)
+        db.add_visit(client_name, book_date_ru, ru_visit_date, start_time, finish_time, procedure_id, 'active', price)
         # db.show_visits()
         
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup='', parse_mode='HTML')

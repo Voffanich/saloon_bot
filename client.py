@@ -9,6 +9,6 @@ class Client():
         self.last_name = last_name
         self.timing = timing
         self.admin = False
-        self.chosen_procedure: str = ''
+        # self.chosen_procedure: str = '' supposed not to be used
         self.chosen_procedure_id: int = 0
         self.dates: dict = {}

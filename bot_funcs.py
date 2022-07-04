@@ -220,3 +220,15 @@ def get_available_times(procedures: dict, procedure_id: int, days_in_future: int
             
     return available_time_windows
     
+def window_occupied(booked_date, procedure_duration, days_in_future) -> bool:
+    window_occupied = False
+    duration = timedelta(hours = int(procedure_duration.split(':')[0]), minutes = int(procedure_duration.split(':')[1]))
+    window = p.open(booked_date, booked_date + duration)
+    
+    occupied_periods = db.get_occupied_periods(days_in_future)
+                
+    for occupied_period in occupied_periods:
+        if not window < occupied_period and not window > occupied_period:
+            window_occupied = True
+            
+    return window_occupied
