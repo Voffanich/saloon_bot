@@ -1,6 +1,9 @@
 import pprint
-from googleapiclient.discovery import build
+from datetime import datetime as dt
+
 from google.oauth2 import service_account
+from googleapiclient.discovery import build
+
 
 class Google_calendar:
     SCOPES = ['https://www.googleapis.com/auth/calendar']
@@ -51,13 +54,48 @@ event = {
 
 # event = obj.add_event(calendar_id=calendar_id, event=event)
 
-events = obj.service.events().list(calendarId=calendar_id_2, timeMin = '2022-11-01T00:00:00+03:00', timeMax = '2022-11-30T00:00:00+03:00').execute()
+# events = obj.service.events().list(calendarId=calendar_id_2, timeMin = '2022-11-01T00:00:00+03:00', timeMax = '2022-11-30T23:59:00+03:00').execute()
+events = obj.service.events().list(calendarId=calendar_id_2, timeMin = '2022-12-01T00:00:00+03:00', timeMax = '2022-12-31T23:59:00+03:00').execute()
+
 # print(events)
 
 # for key, value in events.items():
 #         print(key, ' : ', value)
-    
+manicure = 0
+pedicure = 0
+ 
 for item in events['items']:
-    print(item)
-    # print(item['summary'])
+    # print(item)
+    
+    if 'start' in item:
+        print(item['start']['dateTime'].split('T')[0])
+    else: 
+        print('No start')
+    if 'summary' in item:
+        print(item['summary'])        
+    else: 
+        print('No summary')
+    if 'description' in item:
+        print(item['description'])
+        if 'маникюр' in item['description'].lower():
+            manicure += 1        
+        if 'педикюр' in item['description'].lower():
+            pedicure += 1
+    else: 
+        print('No description')
+    if 'colorId' in item:
+        print(item['colorId'])
+    else: 
+        print('No colorId')
     print('   ')
+    
+    
+print(f'Маникюр: {manicure} визитов х 45 р.')
+print(f'Педикюр: {pedicure} визитов х 40 р.')
+print(f'Доход со всех {manicure + pedicure} визитов {manicure*45 + pedicure*40} р.')
+
+"""
+     'start': {'dateTime': '2022-11-28T19:00:00+03:00', 'timeZone': 'Europe/Minsk'}, 
+     'end': {'dateTime': '2022-11-28T21:00:00+03:00', 'timeZone': 'Europe/Minsk'}
+     
+"""

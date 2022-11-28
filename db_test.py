@@ -1,9 +1,9 @@
-from db_handler import db
-import bot_funcs as bf
-from datetime import datetime as dt
 from datetime import date
-import ru_dates as rd
+from datetime import datetime as dt
 
+import bot_funcs as bf
+import ru_dates as rd
+from db_handler import db
 
 # db = DB_handler()
 

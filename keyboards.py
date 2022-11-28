@@ -1,7 +1,7 @@
 from telebot import types
+
 import bot_funcs as bf
 from db_handler import db
-
 
 # клавиатура выбора процедур
 procedures_keyboard = types.InlineKeyboardMarkup(row_width=1)

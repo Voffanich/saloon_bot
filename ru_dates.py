@@ -1,6 +1,6 @@
+from datetime import date
 from datetime import datetime as dt
 from datetime import timedelta
-from datetime import date
 
 ru_week_days_short = [ 'вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'] # %w - number of weekday, 0 - Sunday
 ru_week_days = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'] # %w - number of weekday, 0 - Sunday
