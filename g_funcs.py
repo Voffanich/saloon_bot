@@ -63,6 +63,7 @@ events = obj.service.events().list(calendarId=calendar_id_2, timeMin = '2022-12-
 #         print(key, ' : ', value)
 manicure = 0
 pedicure = 0
+windows = 0
  
 for item in events['items']:
     # print(item)
@@ -72,7 +73,9 @@ for item in events['items']:
     else: 
         print('No start')
     if 'summary' in item:
-        print(item['summary'])        
+        print(item['summary'])    
+        if 'окно' in item['summary'].lower():
+            windows += 1    
     else: 
         print('No summary')
     if 'description' in item:
@@ -93,6 +96,8 @@ for item in events['items']:
 print(f'Маникюр: {manicure} визитов х 45 р.')
 print(f'Педикюр: {pedicure} визитов х 40 р.')
 print(f'Доход со всех {manicure + pedicure} визитов {manicure*45 + pedicure*40} р.')
+print('')
+print(f'Свободных окон - {windows}')
 
 """
      'start': {'dateTime': '2022-11-28T19:00:00+03:00', 'timeZone': 'Europe/Minsk'}, 
