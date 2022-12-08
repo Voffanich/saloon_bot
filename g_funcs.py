@@ -1,4 +1,6 @@
 import pprint
+import datetime
+import calendar
 from datetime import datetime as dt
 
 from google.oauth2 import service_account
@@ -27,6 +29,67 @@ class Google_calendar:
         
         return self.service.events().insert(calendarId=calendar_id, body=event).execute()
         # print('Event created: %s' % (event.get('htmlLink')))
+        
+    def show_windows(self, calendar_id, time_min, time_max):
+        
+        
+        return windows
+    
+    def show_stats(self, calendar_id, month_num: int):
+        
+        days_in_month = calendar.monthrange(dt.now().year, month_num)
+        print(days_in_month[-1])
+        
+        time_min = f'{dt.strftime(dt.now(), "%Y")}-{dt.strftime(dt.now(), "%m")}-01T00:00:00+03:00'
+        time_max = f'{dt.strftime(dt.now(), "%Y")}-{dt.strftime(dt.now(), "%m")}-{days_in_month[-1]}T23:59:59+03:00'
+        
+        print(f'time_max={time_max}')
+        print(f'time_min={time_min}')
+        
+        '2022-12-01T00:00:00+03:00'
+        
+        events = obj.service.events().list(calendarId=calendar_id, timeMin = time_min, timeMax = time_max).execute()
+        
+        manicure = 0
+        pedicure = 0
+        windows = 0
+        
+        for item in events['items']:
+            # print(item)
+            
+            """if 'start' in item:
+                print(item['start']['dateTime'].split('T')[0])
+            else: 
+                print('No start')"""
+            if 'summary' in item:
+                # print(item['summary'])    
+                if 'окно' in item['summary'].lower():
+                    windows += 1    
+            # else: 
+                # print('No summary')
+            if 'description' in item:
+                # print(item['description'])
+                if 'маникюр' in item['description'].lower():
+                    manicure += 1        
+                if 'педикюр' in item['description'].lower():
+                    pedicure += 1
+            # else: 
+            #     print('No description')
+            # if 'colorId' in item:
+            #     print(item['colorId'])
+            # else: 
+            #     print('No colorId')
+            # print('   ')
+            
+        print(f'Маникюр: {manicure} визитов х 45 р.')
+        print(f'Педикюр: {pedicure} визитов х 40 р.')
+        print(f'Доход со всех {manicure + pedicure} визитов {manicure*45 + pedicure*40} р.')
+        print('')
+        print(f'Свободных окон - {windows}')
+        print(f'-------------------------')
+        
+        return events
+        # return total_bookings, remained_bookings
     
 
 obj = Google_calendar()
@@ -98,9 +161,12 @@ print(f'Педикюр: {pedicure} визитов х 40 р.')
 print(f'Доход со всех {manicure + pedicure} визитов {manicure*45 + pedicure*40} р.')
 print('')
 print(f'Свободных окон - {windows}')
+print(f'-------------------------')
 
 """
      'start': {'dateTime': '2022-11-28T19:00:00+03:00', 'timeZone': 'Europe/Minsk'}, 
      'end': {'dateTime': '2022-11-28T21:00:00+03:00', 'timeZone': 'Europe/Minsk'}
      
 """
+
+obj.show_stats(calendar_id=calendar_id_2, month_num=9)
