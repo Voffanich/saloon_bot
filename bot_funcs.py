@@ -2,17 +2,20 @@ import json
 import re
 import string
 import time
-from typing import Dict, List
-from xmlrpc.client import Boolean
-import pandas as pd
-from db_handler import db
-from client import Client
+from datetime import date
 from datetime import datetime as dt
 from datetime import timedelta
-from datetime import date
-import schedule
-import ru_dates as rd
+from typing import Dict, List
+from xmlrpc.client import Boolean
+
+import pandas as pd
 import portion as p
+import schedule
+
+import ru_dates as rd
+from client import Client
+from db_handler import db
+
 
 def validate_phone(phone_number: str) -> List [Boolean]:
     if re.fullmatch(r'[+]?375(29|33|44|25)\d{7}\b', phone_number):
