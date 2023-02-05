@@ -226,11 +226,12 @@ print(f'-------------------------')
      
 """
 
-#obj.show_stats(calendar_id=calendar_id_2, month_num=9)
-windows = obj.show_windows(calendar_id=calendar_id_2, month_shift=1)
+obj.show_stats(calendar_id=calendar_id_2, month_num=2)
 
-for day, times in windows.items():
-    date_line = day + ': '
-    for time in times:
-        date_line = date_line + time + ', '
-    print(date_line[:-2])
+# windows = obj.show_windows(calendar_id=calendar_id_2, month_shift=0)
+
+# for day, times in windows.items():
+#     date_line = day + ': '
+#     for time in times:
+#         date_line = date_line + time + ', '
+#     print(date_line[:-2])
