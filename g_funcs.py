@@ -64,7 +64,11 @@ class Google_calendar:
         print(f'time_min={time_min}')
         
         # getting events from calendar from the range between time_min and time_max
-        events = obj.service.events().list(calendarId=calendar_id, timeMin = time_min, timeMax = time_max).execute()
+        # siingleEvents shows copies of the repeating event, not only inital event
+        events = obj.service.events().list(calendarId=calendar_id, timeMin = time_min, timeMax = time_max, singleEvents = True).execute()
+        
+        # for event in events:
+        #     print(event, '\n')
         
         windows_count = 0
         
@@ -173,7 +177,7 @@ event = {
 # event = obj.add_event(calendar_id=calendar_id, event=event)
 
 # events = obj.service.events().list(calendarId=calendar_id_2, timeMin = '2022-11-01T00:00:00+03:00', timeMax = '2022-11-30T23:59:00+03:00').execute()
-events = obj.service.events().list(calendarId=calendar_id_2, timeMin = '2022-12-01T00:00:00+03:00', timeMax = '2022-12-31T23:59:00+03:00').execute()
+# events = obj.service.events().list(calendarId=calendar_id_2, timeMin = '2022-12-01T00:00:00+03:00', timeMax = '2022-12-31T23:59:00+03:00').execute()
 
 # print(events)
 
@@ -226,12 +230,12 @@ print(f'-------------------------')
      
 """
 
-obj.show_stats(calendar_id=calendar_id_2, month_num=2)
+# obj.show_stats(calendar_id=calendar_id_2, month_num=2)
 
-# windows = obj.show_windows(calendar_id=calendar_id_2, month_shift=0)
+windows = obj.show_windows(calendar_id=calendar_id_2, month_shift=1)
 
-# for day, times in windows.items():
-#     date_line = day + ': '
-#     for time in times:
-#         date_line = date_line + time + ', '
-#     print(date_line[:-2])
+for day, times in windows.items():
+    date_line = day + ': '
+    for time in times:
+        date_line = date_line + time + ', '
+    print(date_line[:-2])
