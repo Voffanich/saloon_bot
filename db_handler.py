@@ -296,7 +296,8 @@ class DB_handler():
         occupied_periods = []
         
         for period in result:
-            occupied_periods.append(p.closed(dt.strptime(period[1], '%Y-%m-%d %H:%M'), dt.strptime(period[2], '%Y-%m-%d %H:%M')))
+            occupied_periods.append(p.closed(dt.strptime(period[1], '%Y-%m-%d %H:%M'), 
+                                             dt.strptime(period[2], '%Y-%m-%d %H:%M')))
         
         return occupied_periods
         

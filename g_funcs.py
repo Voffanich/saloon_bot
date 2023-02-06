@@ -14,7 +14,8 @@ class Google_calendar:
     FILE_PATH ='user_data\saloon-bot-34fbbe2b1782.json'
     
     def __init__(self):
-        credentials = service_account.Credentials.from_service_account_file(filename = self.FILE_PATH, scopes = self.SCOPES)
+        credentials = service_account.Credentials.from_service_account_file(
+                            filename = self.FILE_PATH, scopes = self.SCOPES)
         self.service = build('calendar', 'v3', credentials = credentials)
         
     def get_calendar_list(self):
@@ -65,7 +66,8 @@ class Google_calendar:
         
         # getting events from calendar from the range between time_min and time_max
         # siingleEvents shows copies of the repeating event, not only inital event
-        events = obj.service.events().list(calendarId=calendar_id, timeMin = time_min, timeMax = time_max, singleEvents = True).execute()
+        events = obj.service.events().list(calendarId=calendar_id, timeMin = time_min, 
+                                           timeMax = time_max, singleEvents = True).execute()
         
         # for event in events:
         #     print(event, '\n')
@@ -79,7 +81,8 @@ class Google_calendar:
                     # getting start time of window in format '2023-01-08T14:20:00'
                     windows.append(item['start']['dateTime'].split('+')[0])
                     # getting start time of window in datetime format
-                    windows_time_format.append(dt.strptime(item['start']['dateTime'].split('+')[0], '%Y-%m-%dT%H:%M:%S'))
+                    windows_time_format.append(dt.strptime(item['start']['dateTime']
+                                                .split('+')[0], '%Y-%m-%dT%H:%M:%S'))
         
         windows_time_format.sort()
         

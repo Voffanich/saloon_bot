@@ -18,8 +18,9 @@ cfg_general = bf.read_config('config.json')['general']
 db.backup_db_file(cfg_general['db_file_name'], 'bot_restart')
 
 # Создание потока с задачами по расписанию, без daemon = True поток продолжает работу после завершения работы основного скрипта
-sсheduled_tasks_thread = threading.Thread(target = bf.scheduled_tasks, kwargs = {'db_file_name':cfg_general['db_file_name'],
-                                                                                'days_to_store_backups':30}, daemon = True)
+sсheduled_tasks_thread = threading.Thread(target = bf.scheduled_tasks, 
+                                          kwargs = {'db_file_name':cfg_general['db_file_name'],
+                                        'days_to_store_backups':30}, daemon = True)
 
 bot = telebot.TeleBot(apikey)
 
@@ -31,9 +32,12 @@ procedures = db.get_procedures_data()
 def start(message, res=False):
     if message.from_user.id not in clients:
         clients[message.from_user.id] = Client(message.from_user.id, '', '', '', '', '')
-        bot.send_message(message.chat.id, text="Да вы, батенька, впервые тут", reply_markup=kb.main_keyboard)
+        bot.send_message(message.chat.id, text="Да вы, батенька, впервые тут", 
+                                        reply_markup=kb.main_keyboard)
     else:    
-        bot.send_message(message.chat.id, text="Дорова! Здесь ты можешь записаться ко мне на процедуры. Жамкай нужные кнопки", reply_markup=kb.main_keyboard)
+        bot.send_message(message.chat.id, 
+                text="Дорова! Здесь ты можешь записаться ко мне на процедуры. Жамкай нужные кнопки", 
+                reply_markup=kb.main_keyboard)
            
 # @bot.message_handler(func=lambda message: clients[message.from_user.id].flag == 'проверить телефон')
 @bot.message_handler(func=lambda message: bf.check_flag(clients, message.from_user.id) == 'проверить телефон')
@@ -45,7 +49,9 @@ def verify_phone_number(message):
         btn1 = types.KeyboardButton("Телефон верный")
         btn2 = types.KeyboardButton("Изменить номер телефона")
         markup.add(btn1, btn2)
-        bot.send_message(message.chat.id, text=f'Номер телефона <b>{clients[message.from_user.id].phone_number}</b> верный?', parse_mode='HTML', reply_markup=markup)
+        bot.send_message(message.chat.id, 
+                text=f'Номер телефона <b>{clients[message.from_user.id].phone_number}</b> верный?', 
+                parse_mode='HTML', reply_markup=markup)
         clients[message.from_user.id].flag = '' 
     else:
         bot.send_message(message.chat.id, text='Вы ввели некорректный номер телефона. Введите, пожалуйста, правильный в формате +375хх без пробелов и дефисов')
