@@ -96,13 +96,16 @@ class Google_calendar:
                 
         return windows_dict
     
-    def show_stats(self, calendar_id, month_num: int):
+    def show_stats(self, calendar_id, month_shift: int):
+        
+        month_num = int(dt.strftime(dt.now(), "%m")) + month_shift
         
         days_in_month = calendar.monthrange(dt.now().year, month_num)
+        
         #print(days_in_month[-1])
         
-        time_min = f'{dt.strftime(dt.now(), "%Y")}-{dt.strftime(dt.now(), "%m")}-01T00:00:00+03:00'
-        time_max = f'{dt.strftime(dt.now(), "%Y")}-{dt.strftime(dt.now(), "%m")}-{days_in_month[-1]}T23:59:59+03:00'
+        time_min = f'{dt.strftime(dt.now(), "%Y")}-{"0" if month_num < 10 else ""}{month_num}-01T00:00:00+03:00'
+        time_max = f'{dt.strftime(dt.now(), "%Y")}-{"0" if month_num < 10 else ""}{month_num}-{days_in_month[-1]}T23:59:59+03:00'
         
         # Check time_max and time_min format
         # print(f'time_max={time_max}')
@@ -233,7 +236,7 @@ print(f'-------------------------')
      
 """
 
-# obj.show_stats(calendar_id=calendar_id_2, month_num=2)
+obj.show_stats(calendar_id=calendar_id_2, month_shift=0)
 
 windows = obj.show_windows(calendar_id=calendar_id_2, month_shift=1)
 
