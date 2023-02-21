@@ -147,8 +147,8 @@ class Google_calendar:
             # print('   ')
             
         print(f'Маникюр: {manicure} визитов х 45 р.')
-        print(f'Педикюр: {pedicure} визитов х 40 р.')
-        print(f'Доход со всех {manicure + pedicure} визитов {manicure*45 + pedicure*40} р.')
+        print(f'Педикюр: {pedicure} визитов х 45 р.')
+        print(f'Доход со всех {manicure + pedicure} визитов {manicure*45 + pedicure*45} р.')
         print('')
         print(f'Свободных окон - {windows}')
         print(f'-------------------------')
