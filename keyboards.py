@@ -15,7 +15,7 @@ procedures_keyboard.add(*btns)
 
 # клавиатура админа
 admin_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)  
-btn_texts = ['Посмотреть записи', 'Обновить прайс', 'Скачать шаблон прайса', 
+btn_texts = ['Показать статистику', 'Выгрузить окна', 'Обновить прайс', 'Скачать шаблон прайса', 
             'Обновить процедуры', 'Скачать шаблон процедур', 'Скачать файл окошек', 'Посмотреть свободные окна'] 
 btns = [types.KeyboardButton(text) for text in btn_texts]
 admin_keyboard.add(*btns)
@@ -26,6 +26,19 @@ btn_texts = ['Записаться', 'Перенести/отменить виз
             'Настроить напоминания', 'Прайс', 'Обо мне', 'Как добраться', 'Что может бот?']
 btns = [types.KeyboardButton(text) for text in btn_texts]
 main_keyboard.add(*btns)
+
+# клавиатура выбора месяца, для которого нужно вывести статистику
+main_stats_keyboard = types.InlineKeyboardMarkup()
+btn1 = types.InlineKeyboardButton('Предыдущий', callback_data=f'stats_shift=-1')
+btn2 = types.InlineKeyboardButton('Текущий', callback_data=f'stats_shift=0')
+btn3 = types.InlineKeyboardButton('Следующий', callback_data=f'stats_shift=1')
+main_stats_keyboard.add(btn1, btn2, btn3)
+
+# клавиатура выбора месяца, для которого нужно вывести свободные для записи окна
+main_windows_keyboard = types.InlineKeyboardMarkup()
+btn1 = types.InlineKeyboardButton('Текущий', callback_data=f'windows_shift=0')
+btn2 = types.InlineKeyboardButton('Следующий', callback_data=f'windows_shift=1')
+main_windows_keyboard.add(btn1, btn2)
 
 # клавиатура подтверждения записи на выбранную дату и время
 def create_confirm_book_keyboard(procedures: list, procedure_id: int, booked_date: str) -> types.InlineKeyboardMarkup:

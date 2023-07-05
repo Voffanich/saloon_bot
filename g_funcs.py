@@ -1,6 +1,7 @@
 import calendar
 import datetime
 import pprint
+import re
 from datetime import datetime as dt
 
 from google.oauth2 import service_account
@@ -61,12 +62,12 @@ class Google_calendar:
         time_min = f'{dt.now().year + year_shift}-{month_str}-01T00:00:00+03:00'
         time_max = f'{dt.now().year + year_shift}-{month_str}-{days_in_month[-1]}T23:59:59+03:00'
         
-        print(f'time_max={time_max}')
-        print(f'time_min={time_min}')
+        # print(f'time_max={time_max}')
+        # print(f'time_min={time_min}')
         
         # getting events from calendar from the range between time_min and time_max
         # siingleEvents shows copies of the repeating event, not only inital event
-        events = obj.service.events().list(calendarId=calendar_id, timeMin = time_min, 
+        events = self.service.events().list(calendarId=calendar_id, timeMin = time_min, 
                                            timeMax = time_max, singleEvents = True).execute()
         
         # for event in events:
@@ -93,12 +94,25 @@ class Google_calendar:
                 windows_dict[day].append(time)
             else:
                 windows_dict[day] = [time]
+        
+        message_text = ''
+        
+        for day, times in windows_dict.items():
+            date_line = day + ': '
+            for time in times:
+                date_line = date_line + time + ', '
                 
-        return windows_dict
+            print(date_line[:-2])
+            message_text += date_line[:-2]
+            message_text += '\n' 
+        # print(message_text)
+                
+        return message_text
     
     def show_stats(self, calendar_id, month_shift: int):
         
         month_num = int(dt.strftime(dt.now(), "%m")) + month_shift
+        ru_month_name = rd.ru_m_full(month_num=month_num)
         
         days_in_month = calendar.monthrange(dt.now().year, month_num)
         
@@ -108,36 +122,58 @@ class Google_calendar:
         time_max = f'{dt.strftime(dt.now(), "%Y")}-{"0" if month_num < 10 else ""}{month_num}-{days_in_month[-1]}T23:59:59+03:00'
         
         # Check time_max and time_min format
-        # print(f'time_max={time_max}')
-        # print(f'time_min={time_min}')
+        print(f'time_max={time_max}')
+        print(f'time_min={time_min}')
         
         # '2022-12-01T00:00:00+03:00'
         
-        events = obj.service.events().list(calendarId=calendar_id, timeMin = time_min, timeMax = time_max).execute()
+        events = self.service.events().list(calendarId=calendar_id, timeMin = time_min, timeMax = time_max, singleEvents = True).execute()
         
         manicure = 0
         pedicure = 0
         windows = 0
         
+        manicure_stats = {'total_count': 0, 'priced_count': 0, 'sum': 0}
+        pedicure_stats = {'total_count': 0, 'priced_count': 0, 'sum': 0}
+        
         for item in events['items']:
-            # print(item)
-            
-            """if 'start' in item:
-                print(item['start']['dateTime'].split('T')[0])
-            else: 
-                print('No start')"""
+           
             if 'summary' in item:
                 # print(item['summary'])    
-                if 'окно' in item['summary'].lower():
+                if 'окно' in item['summary'].lower() and dt.strptime(item['start']['dateTime'].split('+')[0], '%Y-%m-%dT%H:%M:%S') > dt.now():
+                    # print(item['summary'], item['start'], item['end'])
                     windows += 1    
             # else: 
                 # print('No summary')
             if 'description' in item:
                 # print(item['description'])
                 if 'маникюр' in item['description'].lower():
-                    manicure += 1        
+                    manicure += 1
+                    
+                    if dt.strptime(item['start']['dateTime'].split('+')[0], '%Y-%m-%dT%H:%M:%S') < dt.now() and 'summary' in item:   
+                        # считаем все визиты с чеком или без
+                        manicure_stats['total_count'] += 1  
+                        
+                        check = re.findall(r'\b\d{1,3}\b', item['summary'])
+                        print(check)
+                        if check:
+                            # считаем визиты с чеком и итоговую сумму
+                            manicure_stats['priced_count'] += 1
+                            manicure_stats['sum'] += int(check[0])
+                        
+                        
                 if 'педикюр' in item['description'].lower():
                     pedicure += 1
+                    
+                    if dt.strptime(item['start']['dateTime'].split('+')[0], '%Y-%m-%dT%H:%M:%S') < dt.now() and 'summary' in item:       
+                        # считаем все визиты с чеком или без
+                        pedicure_stats['total_count'] += 1  
+                         
+                        check = re.findall(r'\b\d{1,3}\b', item['summary'])
+                        print(check)
+                        if check:
+                            pedicure_stats['priced_count'] += 1
+                            pedicure_stats['sum'] += int(check[0])
             # else: 
             #     print('No description')
             # if 'colorId' in item:
@@ -145,25 +181,69 @@ class Google_calendar:
             # else: 
             #     print('No colorId')
             # print('   ')
-            
-        print(f'Маникюр: {manicure} визитов х 45 р.')
-        print(f'Педикюр: {pedicure} визитов х 45 р.')
-        print(f'Доход со всех {manicure + pedicure} визитов {manicure*45 + pedicure*45} р.')
-        print('')
-        print(f'Свободных окон - {windows}')
-        print(f'-------------------------')
         
-        return events
+        print(f'{manicure_stats["total_count"]=}, {manicure_stats["priced_count"]=}, {manicure_stats["sum"]=} ')
+        print(f'{pedicure_stats["total_count"]=}, {pedicure_stats["priced_count"]=}, {pedicure_stats["sum"]=} ')
+        
+        manicure_price = 46
+        pedicure_price = 46
+        
+        if manicure_stats['total_count'] > 0:
+            if manicure_stats['priced_count'] > 0:
+                average_manicure_check = manicure_stats['sum'] / manicure_stats['priced_count']
+            else: 
+                average_manicure_check = manicure_price
+        blanc_manicure_sum = ((manicure_stats['total_count'] - manicure_stats['priced_count'])) * manicure_price
+           
+        
+        if pedicure_stats['total_count'] > 0:
+            if pedicure_stats['priced_count'] > 0:
+                average_pedicure_check = pedicure_stats['sum'] / pedicure_stats['priced_count']
+            else:
+                average_pedicure_check = pedicure_price
+        blanc_pedicure_sum = ((pedicure_stats['total_count'] - pedicure_stats['priced_count'])) * pedicure_price   
+            
+           
+        total_income = manicure_stats['sum'] + pedicure_stats['sum'] + blanc_manicure_sum + blanc_pedicure_sum
+        
+        print('we are here 1') 
+        message_text = f"""
+Статистика за <b>{ru_month_name.capitalize()}</b>        
+
+Оценка заработка за весь месяц:        
+
+Маникюр: <b>{manicure}</b> визитов х {manicure_price} р.
+Педикюр: <b>{pedicure}</b> визитов х {pedicure_price} р.
+Доход со всех <b>{manicure + pedicure}</b> визитов <b>{manicure*manicure_price + pedicure*pedicure_price} р.</b>
+"""
+        # статистика по фактическому заработку только для текущего и предыдущих месяцев при наличии завершенных визитов
+        if month_shift < 1:
+            # проверка на наличие завершенных визитов
+            if manicure_stats['total_count'] > 0 or pedicure_stats['total_count'] > 0:
+                message_text += f"""
+Фактический заработок на данный момент:
+
+Средний чек за маникюр: <b>{round(average_manicure_check, 2)} р.</b>
+Средний чек за педикюр: <b>{round(average_pedicure_check, 2)} р.</b>
+Всего заработано: <b>{round(total_income, 2)} р.</b>
+        """
+        message_text += f"""
+Свободных окон до конца месяца - {windows}
+        """
+        
+        print(message_text)
+        
+        return message_text
         # return total_bookings, remained_bookings
     
 
-obj = Google_calendar()
+clndr = Google_calendar()
 calendar_id_1 = 'voffanich@gmail.com'
 calendar_id_2 = 'kazlova.alesia@gmail.com'
 
-# obj.add_calendar('kazlova.alesia@gmail.com')
+# clndr.add_calendar('kazlova.alesia@gmail.com')
 
-# pprint.pprint(obj.get_calendar_list())
+# pprint.pprint(clndr.get_calendar_list())
 
 event = {
         'summary':'Аня Дубик',
@@ -180,10 +260,10 @@ event = {
         'colorId':'7'                 
         }  
 
-# event = obj.add_event(calendar_id=calendar_id, event=event)
+# event = clndr.add_event(calendar_id=calendar_id, event=event)
 
-# events = obj.service.events().list(calendarId=calendar_id_2, timeMin = '2022-11-01T00:00:00+03:00', timeMax = '2022-11-30T23:59:00+03:00').execute()
-# events = obj.service.events().list(calendarId=calendar_id_2, timeMin = '2022-12-01T00:00:00+03:00', timeMax = '2022-12-31T23:59:00+03:00').execute()
+# events = clndr.service.events().list(calendarId=calendar_id_2, timeMin = '2022-11-01T00:00:00+03:00', timeMax = '2022-11-30T23:59:00+03:00').execute()
+# events = clndr.service.events().list(calendarId=calendar_id_2, timeMin = '2022-12-01T00:00:00+03:00', timeMax = '2022-12-31T23:59:00+03:00').execute()
 
 # print(events)
 
@@ -236,12 +316,12 @@ print(f'-------------------------')
      
 """
 
-obj.show_stats(calendar_id=calendar_id_2, month_shift=0)
+# clndr.show_stats(calendar_id=calendar_id_2, month_shift=0)
 
-windows = obj.show_windows(calendar_id=calendar_id_2, month_shift=1)
+# windows = clndr.show_windows(calendar_id=calendar_id_2, month_shift=0)
 
-for day, times in windows.items():
-    date_line = day + ': '
-    for time in times:
-        date_line = date_line + time + ', '
-    print(date_line[:-2])
+# for day, times in windows.items():
+#     date_line = day + ': '
+#     for time in times:
+#         date_line = date_line + time + ', '
+#     print(date_line[:-2])

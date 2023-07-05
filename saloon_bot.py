@@ -6,6 +6,7 @@ import telebot
 from telebot import types
 
 import bot_funcs as bf
+import g_funcs as gf
 import keyboards as kb
 import ru_dates as rd
 from client import Client
@@ -158,7 +159,12 @@ def func(message):
     elif (message.text == 'admino stop' or message.text == 'stop admino' or message.text == 'админо стоп' or message.text == 'стоп админо'):
         clients[message.from_user.id].admin = False      
         bot.send_message(message.chat.id, text='admin mode off', reply_markup=kb.main_keyboard)
-     
+    
+    elif (message.text == 'Показать статистику'):
+        bot.send_message(message.chat.id, text='Выберите месяц для отображения статистики', reply_markup=kb.main_stats_keyboard) 
+         
+    elif (message.text == 'Выгрузить окна'):
+        bot.send_message(message.chat.id, text='Выберите месяц для отображения свободных для записи окон', reply_markup=kb.main_windows_keyboard) 
             
     else:
         bot.send_message(message.chat.id, text='К такому меня жизнь не готовила) Если что-то не получается, пользуйтесь, пожалуйста, кнопками меню бота')
@@ -259,6 +265,17 @@ def func(call):
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup='', parse_mode='HTML')
             bot.send_message(chat_id=call.message.chat.id, text='Главное меню', reply_markup=kb.main_keyboard)
     
+    # подготовка и вывод статистика за выбранный месяц
+    elif call.data.startswith('stats_shift='):
+        month_shift = int(call.data.split('=')[1])
+        mess_text = gf.clndr.show_stats(calendar_id=gf.calendar_id_2, month_shift=month_shift)
+        bot.send_message(chat_id=call.message.chat.id, text=mess_text, reply_markup=kb.admin_keyboard, parse_mode='HTML')
+      
+    elif call.data.startswith('windows_shift='):    
+        month_shift = int(call.data.split('=')[1])
+        mess_text = gf.clndr.show_windows(calendar_id=gf.calendar_id_2, month_shift=month_shift)
+        bot.send_message(chat_id=call.message.chat.id, text=mess_text, reply_markup=kb.admin_keyboard, parse_mode='HTML')
+        
 # Запуск бота    
 # bot.polling(non_stop = True, interval = 0, timeout=0) # изучить параметры timeout! non_stop или none_stop?
 

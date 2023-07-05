@@ -16,13 +16,26 @@ def ru_d_full(date_obj) -> str:
     ru_day = ru_week_days[int(dt.strftime(date_obj, '%w'))]
     return ru_day
 
-def ru_m_full(date_obj) -> str:
-    ru_month = ru_months[int(dt.strftime(date_obj, '%m'))]
-    return ru_month
+def ru_m_full(date_obj: object = None, month_num: int = 0) -> str:
+    if month_num:
+        ru_month = ru_months[month_num]
+        return ru_month
+    elif date_obj:
+        ru_month = ru_months[int(dt.strftime(date_obj, '%m'))]
+        return ru_month
+    else:
+        return 'No arguments passed'
 
-def ru_of_m_full(date_obj) -> str:
-    ru_month = ru_of_months[int(dt.strftime(date_obj, '%m'))]
-    return ru_month
+def ru_of_m_full(date_obj: object = None, month_num: int = 0) -> str:    
+    if month_num:
+        ru_month = ru_of_months[month_num]
+        return ru_month
+    elif date_obj:
+        ru_month = ru_of_months[int(dt.strftime(date_obj, '%m'))]
+        return ru_month
+    else:
+        return 'No arguments passed'
+    
 
 # returns date_obj as for exapmle 'Пн, 5 июля'
 def ru_weekday_comma_date(date_obj) -> str:
