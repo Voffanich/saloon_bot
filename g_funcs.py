@@ -150,7 +150,7 @@ class Google_calendar:
                 if 'маникюр' in item['description'].lower():
                     manicure += 1
                     
-                    if dt.strptime(item['start']['dateTime'].split('+')[0], '%Y-%m-%dT%H:%M:%S') < dt.now() and 'summary' in item:   
+                    if dt.strptime(item['end']['dateTime'].split('+')[0], '%Y-%m-%dT%H:%M:%S') < dt.now() and 'summary' in item:   
                         # считаем все визиты с чеком или без
                         manicure_stats['total_count'] += 1  
                         
@@ -165,7 +165,7 @@ class Google_calendar:
                 if 'педикюр' in item['description'].lower():
                     pedicure += 1
                     
-                    if dt.strptime(item['start']['dateTime'].split('+')[0], '%Y-%m-%dT%H:%M:%S') < dt.now() and 'summary' in item:       
+                    if dt.strptime(item['end']['dateTime'].split('+')[0], '%Y-%m-%dT%H:%M:%S') < dt.now() and 'summary' in item:       
                         # считаем все визиты с чеком или без
                         pedicure_stats['total_count'] += 1  
                          
@@ -185,14 +185,16 @@ class Google_calendar:
         print(f'{manicure_stats["total_count"]=}, {manicure_stats["priced_count"]=}, {manicure_stats["sum"]=} ')
         print(f'{pedicure_stats["total_count"]=}, {pedicure_stats["priced_count"]=}, {pedicure_stats["sum"]=} ')
         
-        manicure_price = 46
-        pedicure_price = 46
+        manicure_price = 45
+        pedicure_price = 45
         
         if manicure_stats['total_count'] > 0:
             if manicure_stats['priced_count'] > 0:
                 average_manicure_check = manicure_stats['sum'] / manicure_stats['priced_count']
             else: 
                 average_manicure_check = manicure_price
+        else:
+            average_manicure_check = 0
         blanc_manicure_sum = ((manicure_stats['total_count'] - manicure_stats['priced_count'])) * manicure_price
            
         
@@ -201,36 +203,41 @@ class Google_calendar:
                 average_pedicure_check = pedicure_stats['sum'] / pedicure_stats['priced_count']
             else:
                 average_pedicure_check = pedicure_price
+        else:
+            average_pedicure_check = 0
         blanc_pedicure_sum = ((pedicure_stats['total_count'] - pedicure_stats['priced_count'])) * pedicure_price   
             
            
         total_income = manicure_stats['sum'] + pedicure_stats['sum'] + blanc_manicure_sum + blanc_pedicure_sum
         
-        print('we are here 1') 
-        message_text = f"""
-Статистика за <b>{ru_month_name.capitalize()}</b>        
+        try:
+            # print('we are here 1') 
+            message_text = f"""
+    Статистика за <b>{ru_month_name.capitalize()}</b>        
 
-Оценка заработка за весь месяц:        
+    Оценка заработка за весь месяц:        
 
-Маникюр: <b>{manicure}</b> визитов х {manicure_price} р.
-Педикюр: <b>{pedicure}</b> визитов х {pedicure_price} р.
-Доход со всех <b>{manicure + pedicure}</b> визитов <b>{manicure*manicure_price + pedicure*pedicure_price} р.</b>
-"""
-        # статистика по фактическому заработку только для текущего и предыдущих месяцев при наличии завершенных визитов
-        if month_shift < 1:
-            # проверка на наличие завершенных визитов
-            if manicure_stats['total_count'] > 0 or pedicure_stats['total_count'] > 0:
-                message_text += f"""
-Фактический заработок на данный момент:
+    Маникюр: <b>{manicure}</b> визитов х {manicure_price} р.
+    Педикюр: <b>{pedicure}</b> визитов х {pedicure_price} р.
+    Доход со всех <b>{manicure + pedicure}</b> визитов <b>{manicure*manicure_price + pedicure*pedicure_price} р.</b>
+    """
+            # статистика по фактическому заработку только для текущего и предыдущих месяцев при наличии завершенных визитов
+            if month_shift < 1:
+                # проверка на наличие завершенных визитов
+                if manicure_stats['total_count'] > 0 or pedicure_stats['total_count'] > 0:
+                        message_text += f"""
+    Фактический заработок на данный момент:
 
-Средний чек за маникюр: <b>{round(average_manicure_check, 2)} р.</b>
-Средний чек за педикюр: <b>{round(average_pedicure_check, 2)} р.</b>
-Всего заработано: <b>{round(total_income, 2)} р.</b>
-        """
-        message_text += f"""
-Свободных окон до конца месяца - {windows}
-        """
-        
+    Средний чек за маникюр: <b>{round(average_manicure_check, 2)} р.</b> (процедур: {manicure_stats["total_count"]})
+    Средний чек за педикюр: <b>{round(average_pedicure_check, 2)} р.</b> (процедур: {pedicure_stats["total_count"]})
+    Всего заработано: <b>{round(total_income, 2)} р.</b>
+            """
+            message_text += f"""
+    Свободных окон до конца месяца - {windows}
+            """
+        except Exception as ex:
+            print(ex)
+            
         print(message_text)
         
         return message_text
