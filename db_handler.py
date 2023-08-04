@@ -4,6 +4,7 @@ import shutil
 import sqlite3
 from datetime import datetime as dt
 from datetime import timedelta
+from pathlib import Path
 from typing import Dict, List
 from xmlrpc.client import Boolean
 
@@ -169,7 +170,9 @@ class DB_handler():
     
     def update_procedures(self):
         db_row = []    
-        procedures_df = pd.read_excel('user_data/procedures.xlsx').fillna("0")
+        
+        user_data_path = Path('user_data/')
+        procedures_df = pd.read_excel(user_data_path / 'procedures.xlsx').fillna("0")
         
         # очистка таблицы
         query = f"""

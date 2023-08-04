@@ -3,6 +3,7 @@ import datetime
 import pprint
 import re
 from datetime import datetime as dt
+from pathlib import Path
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -12,7 +13,8 @@ import ru_dates as rd
 
 class Google_calendar:
     SCOPES = ['https://www.googleapis.com/auth/calendar']
-    FILE_PATH ='user_data\saloon-bot-34fbbe2b1782.json'
+    user_data_path = Path('user_data/')
+    FILE_PATH = user_data_path / 'g_config.json'
     
     def __init__(self):
         credentials = service_account.Credentials.from_service_account_file(

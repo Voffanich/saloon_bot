@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "saloon-bot",
+  "private_key_id": "34fbbe2b1782563f9a9ecad4b7366b72b1b1128d",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQChUJoER0OjgrEw\nkudFap/d40+LN9u6J2ISY8lIzBoe1sd/4PqFzPaUrQnGIS8fhTqmURquxpVDC2Qs\nJf74930/uU0fQ0pr8QBGCYWP8NKTQ2TSpd3aNG7L8ec+y/Mq7Z88t36avhqo20ZF\nXDDriNOJvsOl3ZwW4QCxxext+VtFMKwW4fomZZ72rWWHooLbj+7F6pTUWpRn2cgE\nWDrHx1825WywvMeNWOj80m5gQ5w5zLWNZGr/+WFKXBY5a8oV3kPexrMuytcTVArn\n9eJDVrWsFp3efu5K7nbWSOTStSWJCKAL88ypWuMbCyr5BsXH/yeiF8lMNbwg+GIK\n/iTEp5f1AgMBAAECggEATfLYuYCGGpiobkROJKjlHx8b7LXNIyKsrR4ywU5+wLAg\nLpbT95uW+ziyJF8cmiqSsJM4RYQH1CHJAdxKXJualhRAQ/8MEySdcTpgo7FGz4od\nSfyEO1BiyYHWr+11TyULcRdpwfRihX2PcyydJvMy5LidaaSwLA4Fe+Gb4XhAtimO\nWYZ6cz4/MsTEzBoiIltypBsHIvjVdz6BBu6pBlQ0S1oWg8IpASySscXD7aUFAd5G\n/yHXXysXTxSSvDlDayQcbYHfPwnJLa8lktWEE0MjunHfsEnrK9IZdP1JwiwPvaDy\n+T5ef3O3j3lZe1VB9JC18o/yhqupdyNRtxYfD5mv8QKBgQDLmign6MWzg/4IRr5w\nxsP9WzJxq4zk1vS2WhP10ySxuy5pvOFIRANmMD3snquPk+FovrjEVx/2WhdNZFf/\n/1KLu/crvM58a6nQQ4yoBhc46fE3S7Q4fC0TVX5dcbkcgFZyvKaS1BAeYEUy31Cd\nZ3jynpbYADuQ8gVXpDn772Y1nwKBgQDK1HIBHP4X3mUPk50bxyV4zyPJzN+5t/0X\nkiWdnIsuT7gpF/A31JcWnjUSNB5ZfHiIz4EkVuQqWNezxoa+s+TfJt3IbqWYpXao\n9HLfTjsAOL1cNWTbmABNnozHNqSFH7aaIh4+mqZiBBIL+zJx5Khl0FVpA49141e5\n9rFa8GlB6wKBgQCwqtQ7RRT/nwG35sLrEt4PoqmTzrrT+t2euWzmes81VWmBoL6O\nuU2Fx0iEYG4XiMcn345t9/epCSV9Jxvg64iR7YkdL5iwh69zIpoTVi2iWgTP6WW5\nOa7XPvEGXl60p3vb1WxorZBK+1gwO2w1GQru48OaLCGDtS4DjWIvBN1YmwKBgQCy\nathx9D/rXR0G67Fqyu5Ca+uuSwKOCrOedVeTYi3oKgX0V/NeGSpiof5LKf98dgpN\nRkLyZWDFg2sS39KNlA8C4Nx8wB/4u6w6iPU3S0iJNGAV6X3z0KyLmql5X66uz6u/\nv71dEorDc5MwaOIB38Ll9LH88z3R1I7JraBrP0lHywKBgQCmuu0QrVYTrEJgjGdo\nIzq8Rd1JKBTI3pUfr8GEk9hFVwviq0U1WVANgr6MdMdcSQ1EQHXuCfyDDIeE6Gji\n3QNfytDx0MKbrVyx4zZsjVBH/bE1E6SxXC+W7s5Oj8HgGq7jq1JPjHjXIvCZsFl6\nw8shRdAS9RLwYeCXaVGsabKAYg==\n-----END PRIVATE KEY-----\n",
+  "client_email": "saloon-bot@saloon-bot.iam.gserviceaccount.com",
+  "client_id": "113622162324490091278",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/saloon-bot%40saloon-bot.iam.gserviceaccount.com"
+}

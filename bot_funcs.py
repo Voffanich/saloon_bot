@@ -5,6 +5,7 @@ import time
 from datetime import date
 from datetime import datetime as dt
 from datetime import timedelta
+from pathlib import Path
 from typing import Dict, List
 from xmlrpc.client import Boolean
 
@@ -42,7 +43,9 @@ def get_procedures_excel() -> list[str]:
     cols = [0]
     procedures_list = []
     
-    procedures = pd.read_excel('user_data/procedures.xlsx', usecols=cols)['Процедура']
+    user_data_path = Path('user_data/')
+    
+    procedures = pd.read_excel(user_data_path / 'procedures.xlsx', usecols=cols)['Процедура']
     
     for procedure in procedures:
         procedures_list.append(procedure)
