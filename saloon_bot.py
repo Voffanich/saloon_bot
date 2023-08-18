@@ -281,8 +281,13 @@ def func(call):
 
 if __name__ == '__main__':
     sсheduled_tasks_thread.start()
-    try:
-        bot.polling(non_stop = True, interval = 0, timeout = 0)
-    except:
-        pass
+    # try:
+    #     bot.polling(non_stop = True, interval = 0, timeout = 0)
+    # except:
+    #     pass
+    bot.infinity_polling()
     
+    
+    # .\venv\scripts\activate.ps1 
+    # terminal docker bot run command
+    # docker run -e PYTHONUNBUFFERED=1 --restart=unless-stopped -d saloon_bot
