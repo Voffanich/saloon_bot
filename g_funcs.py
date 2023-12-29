@@ -108,24 +108,36 @@ class Google_calendar:
             message_text += date_line[:-2]
             message_text += '\n' 
         # print(message_text)
+        
+        if not message_text:
+            message_text = "В выбранно месяце свободных для записи окон нет."
                 
         return message_text
     
     def show_stats(self, calendar_id, month_shift: int):
         
         month_num = int(dt.strftime(dt.now(), "%m")) + month_shift
+        
+        if month_num == 13:
+            month_num = 1
+            year = str(int(dt.strftime(dt.now(), "%Y")) + 1)
+            print(f'{year=}')
+        else:
+            year = dt.strftime(dt.now(), "%Y")
+            print(f'{year=}')
+            
         ru_month_name = rd.ru_m_full(month_num=month_num)
         
         days_in_month = calendar.monthrange(dt.now().year, month_num)
         
         #print(days_in_month[-1])
         
-        time_min = f'{dt.strftime(dt.now(), "%Y")}-{"0" if month_num < 10 else ""}{month_num}-01T00:00:00+03:00'
-        time_max = f'{dt.strftime(dt.now(), "%Y")}-{"0" if month_num < 10 else ""}{month_num}-{days_in_month[-1]}T23:59:59+03:00'
+        time_min = f'{year}-{"0" if month_num < 10 else ""}{month_num}-01T00:00:00+03:00'
+        time_max = f'{year}-{"0" if month_num < 10 else ""}{month_num}-{days_in_month[-1]}T23:59:59+03:00'
         
         # Check time_max and time_min format
-        print(f'time_max={time_max}')
         print(f'time_min={time_min}')
+        print(f'time_max={time_max}')
         
         # '2022-12-01T00:00:00+03:00'
         
@@ -187,8 +199,8 @@ class Google_calendar:
         print(f'{manicure_stats["total_count"]=}, {manicure_stats["priced_count"]=}, {manicure_stats["sum"]=} ')
         print(f'{pedicure_stats["total_count"]=}, {pedicure_stats["priced_count"]=}, {pedicure_stats["sum"]=} ')
         
-        manicure_price = 45
-        pedicure_price = 45
+        manicure_price = 48
+        pedicure_price = 48
         
         if manicure_stats['total_count'] > 0:
             if manicure_stats['priced_count'] > 0:
