@@ -118,13 +118,17 @@ class Google_calendar:
         
         month_num = int(dt.strftime(dt.now(), "%m")) + month_shift
         
-        if month_num == 13:
-            month_num = 1
+        if month_num > 12:
+            month_num = month_num - 12
             year = str(int(dt.strftime(dt.now(), "%Y")) + 1)
-            print(f'{year=}')
+            print(f'{year=} {month_num=}')
+        elif month_num < 1:
+            month_num = month_num + 12
+            year = str(int(dt.strftime(dt.now(), "%Y")) - 1)
+            print(f'{year=} {month_num=}')
         else:
             year = dt.strftime(dt.now(), "%Y")
-            print(f'{year=}')
+            print(f'{year=} {month_num=}')
             
         ru_month_name = rd.ru_m_full(month_num=month_num)
         
