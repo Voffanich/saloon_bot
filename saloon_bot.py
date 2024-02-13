@@ -148,7 +148,7 @@ def func(message):
         clients[message.from_user.id].flag = 'выбор процедуры'
         
         
-    elif (message.text == 'admino' or message.text == 'админо'):                
+    elif (message.text.lower() == 'admino' or message.text.lower() == 'админо'):                
         if message.from_user.username in admin_usernames:
             bot.send_message(message.chat.id, text='Привет, админ!', reply_markup=kb.admin_keyboard)
             clients[message.from_user.id].admin = True
@@ -156,7 +156,7 @@ def func(message):
             bot.send_message(message.chat.id, text='К такому меня жизнь не готовила) Если что-то не получается, пользуйтесь, пожалуйста, кнопками меню бота', reply_markup=kb.main_keyboard)
     
     
-    elif (message.text == 'admino stop' or message.text == 'stop admino' or message.text == 'админо стоп' or message.text == 'стоп админо'):
+    elif (message.text.lower() == 'admino stop' or message.text.lower() == 'stop admino' or message.text.lower() == 'админо стоп' or message.text.lower() == 'стоп админо'):
         clients[message.from_user.id].admin = False      
         bot.send_message(message.chat.id, text='admin mode off', reply_markup=kb.main_keyboard)
     
@@ -176,7 +176,9 @@ def func(call):
         procedure_id = int(call.data.split('=')[1])
         clients[call.from_user.id].chosen_procedure_id = procedure_id
         procedure_name = procedures[procedure_id - 1]['procedure']
-        dates = bf.get_available_times(procedures, procedure_id, cfg_general['days_to_show_booktimes'],
+        # dates = bf.get_available_times(procedures, procedure_id, cfg_general['days_to_show_booktimes'],
+        #                                                          cfg_general['mins_to_nearest_book'])
+        dates = gf.clndr.get_available_times(gf.calendar_id_2, cfg_general['days_to_show_booktimes'], 
                                                                  cfg_general['mins_to_nearest_book'])
         dates_keyboard = kb.create_dates_keyboard(dates)
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
@@ -195,8 +197,10 @@ def func(call):
     elif call.data.startswith('day='):
         day = call.data.split('=')[1]  
         procedure_id = clients[call.from_user.id].chosen_procedure_id
-        dates = bf.get_available_times(procedures, procedure_id, cfg_general['days_to_show_booktimes'],
-                                                                         cfg_general['mins_to_nearest_book'])     
+        # dates = bf.get_available_times(procedures, procedure_id, cfg_general['days_to_show_booktimes'],
+        #                                                                  cfg_general['mins_to_nearest_book'])     
+        dates = gf.clndr.get_available_times(gf.calendar_id_2, cfg_general['days_to_show_booktimes'], 
+                                                                 cfg_general['mins_to_nearest_book'])
         times_keyboard = kb.create_times_keyboard(dates, day, clients[call.from_user.id].chosen_procedure_id)
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Выберите подходящее время из доступных на <b>' + day + '</b>', reply_markup=times_keyboard, parse_mode='HTML')
     
@@ -209,18 +213,39 @@ def func(call):
         procedure_name = procedures[procedure_id - 1]['procedure']
         booked_date_ru = book_date_ru + '&' + book_time
         
-        booked_date = dt.strptime(dt.strftime(rd.date_from_ru_weekday_comma_date(book_date_ru), '%Y-%m-%d') + book_time, '%Y-%m-%d%H:%M')
+        print(f'{book_date_ru=}\n{book_time=}')
         
-        if bf.window_occupied(booked_date, procedure_duration, cfg_general['days_to_show_booktimes']):
+        # booked_date = dt.strptime(dt.strftime(rd.date_from_ru_weekday_comma_date(book_date_ru), '%Y-%m-%d') + book_time, '%Y-%m-%d%H:%M')
+        booked_date = dt.strptime(f'{dt.now().year}-{book_date_ru.split(",")[0]}' + book_time, '%Y-%d.%m%H:%M') 
+        
+        if booked_date < dt.now():
+            book_date += timedelta(years=1) 
+        
+        
+        
+        # if bf.window_occupied(booked_date, procedure_duration, cfg_general['days_to_show_booktimes']):
+        if not gf.clndr.check_window_occupation(gf.calendar_id_2, booked_date, call.from_user.id):
             mess_text = f'К сожалению, на это время кто-то уже успел записаться. Посмотрите, пожалуйста, другие варианты'
-            dates = bf.get_available_times(procedures, procedure_id, cfg_general['days_to_show_booktimes'],
+            # dates = bf.get_available_times(procedures, procedure_id, cfg_general['days_to_show_booktimes'],
+            #                                                      cfg_general['mins_to_nearest_book'])
+            dates = gf.clndr.get_available_times(gf.calendar_id_2, cfg_general['days_to_show_booktimes'], 
                                                                  cfg_general['mins_to_nearest_book'])
             dates_keyboard = kb.create_dates_keyboard(dates)
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup=dates_keyboard, parse_mode='HTML')
-        else:    
-            mess_text = f'Записываю вас на <b>{procedure_name}</b> на <b>{book_date_ru}, {book_time}</b>?'
-            confirm_book_keyboard = kb.create_confirm_book_keyboard(procedures, procedure_id, booked_date_ru)
-            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup=confirm_book_keyboard, parse_mode='HTML') 
+        else:  
+            if gf.clndr.occupy_window(gf.calendar_id_2, booked_date, call.from_user.id): 
+                mess_text = f'Записываю вас на <b>{procedure_name}</b> на <b>{book_date_ru}, {book_time}</b>?'
+                confirm_book_keyboard = kb.create_confirm_book_keyboard(procedures, procedure_id, booked_date_ru)
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup=confirm_book_keyboard, parse_mode='HTML') 
+            
+            else:
+                mess_text = f'К сожалению, на это время кто-то уже успел записаться. Посмотрите, пожалуйста, другие варианты'
+                # dates = bf.get_available_times(procedures, procedure_id, cfg_general['days_to_show_booktimes'],
+                #                                                      cfg_general['mins_to_nearest_book'])
+                dates = gf.clndr.get_available_times(gf.calendar_id_2, cfg_general['days_to_show_booktimes'], 
+                                                                    cfg_general['mins_to_nearest_book'])
+                dates_keyboard = kb.create_dates_keyboard(dates)
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup=dates_keyboard, parse_mode='HTML')
     
     # занесение записи на процедуру в базу
     elif call.data.startswith('confirm_book&'):
@@ -228,6 +253,7 @@ def func(call):
         
         # book date for message
         ru_visit_date = call.data.split('&')[2]
+        print(f'{ru_visit_date=}')
         # book time for message
         book_time = call.data.split('&')[3]
         # db_book_date = dt.strftime(rd.date_from_ru_weekday_comma_date(book_date_ru), '%Y-%m-%d')
@@ -235,9 +261,16 @@ def func(call):
         # procedure duration as timedelta object
         procedure_duration = timedelta(hours = int(duration.split(':')[0]), minutes = int(duration.split(':')[1]))  
         
-        start_time = dt.strftime(rd.date_from_ru_weekday_comma_date(ru_visit_date), '%Y-%m-%d') + ' ' + call.data.split('&')[3] # str
+        year = dt.now().year
+                
+        # start_time = dt.strftime(rd.date_from_ru_weekday_comma_date(ru_visit_date), '%Y-%m-%d') + ' ' + call.data.split('&')[3] # str
+        start_time = f'{year}.{ru_visit_date.split(",")[0]}' + ' ' + call.data.split('&')[3] # str
+        
+        if dt.strptime(f'{start_time}', '%Y.%d.%m %H:%M') < dt.now():
+            year += 1
+            start_time = f'{year}.{ru_visit_date.split(",")[0]}' + ' ' + call.data.split('&')[3] # str
            
-        finish_time = dt.strftime(dt.strptime(start_time, '%Y-%m-%d  %H:%M') +  procedure_duration, '%Y-%m-%d %H:%M') #str
+        finish_time = dt.strftime(dt.strptime(start_time, '%Y.%d.%m  %H:%M') +  procedure_duration, '%Y-%m-%d %H:%M') #str
         
         book_date = dt.strftime(dt.now(), '%Y-%m-%d %H:%M')
                  
@@ -248,12 +281,17 @@ def func(call):
        
         price = int(procedures[procedure_id - 1]['price'])
         
-        booked_date = dt.strptime(dt.strftime(rd.date_from_ru_weekday_comma_date(ru_visit_date), '%Y-%m-%d') + book_time, '%Y-%m-%d%H:%M')
+        # booked_date = dt.strptime(dt.strftime(rd.date_from_ru_weekday_comma_date(ru_visit_date), '%Y-%m-%d') + book_time, '%Y-%m-%d%H:%M')
+        booked_date = dt.strptime(start_time, '%Y.%d.%m %H:%M')
+        start_time = dt.strftime(booked_date, '%Y-%m-%d %H:%M')
+        
         proc_duration_str = procedures[procedure_id - 1]['duration'] 
         
-        if bf.window_occupied(booked_date, proc_duration_str, cfg_general['days_to_show_booktimes']):
+        if not gf.clndr.check_window_occupation(gf.calendar_id_2, booked_date, call.from_user.id):
             mess_text = f'К сожалению, на это время кто-то уже успел записаться. Возможно, вы слишком долго подтверждали запись'
-            dates = bf.get_available_times(procedures, procedure_id, cfg_general['days_to_show_booktimes'],
+            # dates = bf.get_available_times(procedures, procedure_id, cfg_general['days_to_show_booktimes'],
+            #                                                      cfg_general['mins_to_nearest_book'])
+            dates = gf.clndr.get_available_times(gf.calendar_id_2, cfg_general['days_to_show_booktimes'], 
                                                                  cfg_general['mins_to_nearest_book'])
             dates_keyboard = kb.create_dates_keyboard(dates)
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup=dates_keyboard, parse_mode='HTML')

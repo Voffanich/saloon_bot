@@ -2,6 +2,7 @@ from datetime import date
 from datetime import datetime as dt
 
 import bot_funcs as bf
+import g_funcs as gf
 import ru_dates as rd
 from db_handler import db
 
@@ -13,6 +14,10 @@ from db_handler import db
 
 procedures = db.get_procedures_data()
 
+# gf.clndr.show_windows(gf.calendar_id_2, 0)
+
+gf.clndr.get_available_times(gf.calendar_id_2, 30, 30)
+
 
 
 # print(rd.date_from_ru_weekday_comma_date('Вт, 5 июня'))
@@ -21,8 +26,11 @@ procedures = db.get_procedures_data()
 # print(bf.get_available_times_2(procedures, 2))
 timetable = bf.get_available_times(procedures, 1, 20)
 
-for key in timetable:
-    print(key, timetable[key])
+print(timetable)
+
+# for key in timetable:
+#     print(key, timetable[key])
+
 
 
 # print(db.get_occupied_periods(20))
