@@ -3,6 +3,7 @@ import datetime
 import pprint
 import re
 from datetime import datetime as dt
+from datetime import timedelta
 from pathlib import Path
 
 from google.oauth2 import service_account
@@ -51,7 +52,7 @@ class Google_calendar:
         
         days_in_month = calendar.monthrange(dt.now().year, month_num)
         
-        print(days_in_month[-1])
+        # print(days_in_month[-1])
         
         
         # adding 0 to month num in the beginning if month num is 1 to 9
@@ -64,8 +65,8 @@ class Google_calendar:
         time_min = f'{dt.now().year + year_shift}-{month_str}-01T00:00:00+03:00'
         time_max = f'{dt.now().year + year_shift}-{month_str}-{days_in_month[-1]}T23:59:59+03:00'
         
-        # print(f'time_max={time_max}')
-        # print(f'time_min={time_min}')
+        # print(f'{time_max=}')
+        # print(f'{time_min=}')
         
         # getting events from calendar from the range between time_min and time_max
         # siingleEvents shows copies of the repeating event, not only inital event
@@ -113,6 +114,105 @@ class Google_calendar:
             message_text = "В выбранно месяце свободных для записи окон нет."
                 
         return message_text
+    
+    def get_available_times(self, calendar_id, days_ahead: int, mins_to_nearest_book: int) -> dict:
+        
+        windows = []
+        windows_time_format = []
+        windows_dict = {}  
+        
+        period_start_time = dt.now() + timedelta(minutes=mins_to_nearest_book)
+        period_finish_time = dt.now() + timedelta(days=days_ahead)
+        
+        time_min = dt.strftime(period_start_time, '%Y-%m-%dT%H:%M:00+03:00')
+        time_max = dt.strftime(period_finish_time, '%Y-%m-%dT%H:%M:00+03:00')
+        
+        print(f'{time_min=}\n{time_max=}')
+        
+         # preparing time range start and finish in required format for calendar API        
+        
+                
+        # getting events from calendar from the range between time_min and time_max
+        # siingleEvents shows copies of the repeating event, not only inital event
+        events = self.service.events().list(calendarId=calendar_id, timeMin = time_min, 
+                                           timeMax = time_max, singleEvents = True).execute()
+        
+        for item in events['items']:
+            if 'summary' in item:
+                if 'окно' in item['summary'].lower():
+                    # windows.append(item['start']['dateTime'].split('+')[0])
+                    # getting start time of window in datetime format
+                    windows_time_format.append(dt.strptime(item['start']['dateTime']
+                                                .split('+')[0], '%Y-%m-%dT%H:%M:%S'))
+
+        windows_time_format.sort()
+                    
+        print(f'{windows_time_format=}')
+        
+        for date in windows_time_format:
+            day = dt.strftime(date, '%d.%m') + f', {rd.ru_d_short(date)}'
+            time = dt.strftime(date, '%H:%M')
+            if day in windows_dict:
+                windows_dict[day].append(time)
+            else:
+                windows_dict[day] = [time]
+                
+        print(f'{windows_dict=}')
+        
+        return windows_dict
+        
+    
+    def occupy_window(self, calendar_id, start_time, telegram_id) -> bool:
+        
+        time_min = dt.strftime(start_time, '%Y-%m-%dT%H:%M:%S+03:00')
+        time_max = dt.strftime(start_time + timedelta(hours=12), '%Y-%m-%dT%H:%M:%S+03:00')
+        
+        try:
+            events = self.service.events().list(calendarId=calendar_id, timeMin = time_min, 
+                                           timeMax = time_max, singleEvents = True).execute()
+            for event in events['items']:
+                if event['start']['dateTime'] == time_min and event['summary'].lower() == 'окно':
+                    window = event
+        except Exception as ex:
+            print(f'Some fucking error happened')
+            print(ex)
+            return False
+            
+        window['summary'] = f'Бронь с {dt.strftime(dt.now(),"%Y-%m-%d %H:%M")}'
+        window['description'] = telegram_id
+                
+        
+        occupied_window = self.service.events().update(calendarId=calendar_id, eventId=window['id'], body=window).execute()
+        
+        print(f'Window occupied \n {occupied_window["summary"]}')
+        
+        return True
+                    
+                    
+                       
+    def check_window_occupation(self, calendar_id, start_time, telegram_id) -> bool:
+        
+        time_min = dt.strftime(start_time, '%Y-%m-%dT%H:%M:%S+03:00')
+        time_max = dt.strftime(start_time + timedelta(hours=12), '%Y-%m-%dT%H:%M:%S+03:00')
+        
+        try:
+            events = self.service.events().list(calendarId=calendar_id, timeMin = time_min, 
+                                           timeMax = time_max, singleEvents = True).execute()
+            for event in events['items']:
+                if event['start']['dateTime'] == time_min and 'бронь' in event['summary'].lower():
+                    print('OW window found')
+                    window = event
+        except Exception as ex:
+            print(f'Some fucking error happened')
+            print(ex)
+            return False
+        
+        if window['description'] == telegram_id:
+            return True
+        else:
+            return False
+        
+        
     
     def show_stats(self, calendar_id, month_shift: int):
         
