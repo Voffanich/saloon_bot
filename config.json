@@ -2,7 +2,8 @@
     "general":{
         "db_file_name": "saloon.sqlite",
         "days_to_store_db_backups": 30,
-        "days_to_show_booktimes": 30,
-        "mins_to_nearest_book": 30
+        "days_to_show_booktimes": 40,
+        "mins_to_nearest_book": 30,
+        "mins_to_occupy_window": 5
     }    
 }

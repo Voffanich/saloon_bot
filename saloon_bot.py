@@ -8,9 +8,10 @@ from telebot import types
 import bot_funcs as bf
 import g_funcs as gf
 import keyboards as kb
+import messages as msg
 import ru_dates as rd
 from client import Client
-from credentials import admin_usernames, apikey
+from credentials import admin_ids, admin_usernames, apikey
 from db_handler import db
 
 cfg_general = bf.read_config('config.json')['general']
@@ -21,7 +22,10 @@ db.backup_db_file(cfg_general['db_file_name'], 'bot_restart')
 # Создание потока с задачами по расписанию, без daemon = True поток продолжает работу после завершения работы основного скрипта
 sсheduled_tasks_thread = threading.Thread(target = bf.scheduled_tasks, 
                                           kwargs = {'db_file_name':cfg_general['db_file_name'],
-                                        'days_to_store_backups':30}, daemon = True)
+                                                    'days_to_store_backups':cfg_general['days_to_store_db_backups'], 
+                                                    'calendar_id':gf.calendar_id_2,
+                                                    'days_to_show_windows':cfg_general['days_to_show_booktimes'],
+                                                    'mins_to_occupy_window':cfg_general['mins_to_occupy_window']}, daemon = True)
 
 bot = telebot.TeleBot(apikey)
 
@@ -33,11 +37,11 @@ procedures = db.get_procedures_data()
 def start(message, res=False):
     if message.from_user.id not in clients:
         clients[message.from_user.id] = Client(message.from_user.id, '', '', '', '', '')
-        bot.send_message(message.chat.id, text="Да вы, батенька, впервые тут", 
+        bot.send_message(message.chat.id, text=msg.UNKNOWN_WELCOME, 
                                         reply_markup=kb.main_keyboard)
     else:    
         bot.send_message(message.chat.id, 
-                text="Дорова! Здесь ты можешь записаться ко мне на процедуры. Жамкай нужные кнопки", 
+                text=msg.KNOWN_WELCOME, 
                 reply_markup=kb.main_keyboard)
            
 # @bot.message_handler(func=lambda message: clients[message.from_user.id].flag == 'проверить телефон')
@@ -79,7 +83,8 @@ def func(message):
     
     
     if (message.text == 'Что может бот?'):
-        bot.send_message(message.chat.id, text='1. Записаться на процедуру\n2. Посмотреть дату и время записи\n3. Настроить напоминания о визите\n4. Перенести визит\n')
+        bot.send_message(message.chat.id, text=msg.BOT_CAN_DO,
+                         reply_markup=kb.main_keyboard)
             
     
     elif (message.text == 'Записаться'):
@@ -95,7 +100,7 @@ def func(message):
             btn1 = types.KeyboardButton("Оставляем")
             btn2 = types.KeyboardButton("Изменить имя")
             markup.add(btn1, btn2)
-            bot.send_message(message.chat.id, text='Впервые здесь? Давайте-ка занесем вас в базу клиентов. '
+            bot.send_message(message.chat.id, text='Вы не знакомы боту) Давайте-ка занесем вас в базу клиентов. '
                                                     f'В телеграме вы подписаны как <b>{message.from_user.first_name} {message.from_user.last_name}</b>. '
                                                     'Оставляем или хотите изменить?', reply_markup=markup, parse_mode="HTML")
     
@@ -113,11 +118,15 @@ def func(message):
         
         
     elif (message.text == 'Прайс'):
-        bot.send_message(message.chat.id, text='Тебе кабзда')
+        bot.send_message(message.chat.id, text='Тебе кабзда', reply_markup=kb.main_keyboard)
         
         
     elif (message.text == 'Обо мне'):
-        bot.send_message(message.chat.id, text='Пушка-гонка-ракета')
+        bot.send_message(message.chat.id, text=msg.ABOUT, reply_markup=kb.main_keyboard)
+    
+    
+    elif (message.text == 'Как добраться'):
+        bot.send_message(message.chat.id, text=msg.LOCATION, reply_markup=kb.main_keyboard, parse_mode='HTML')
         
         
     elif (message.text == 'Оставляем'):
@@ -167,7 +176,7 @@ def func(message):
         bot.send_message(message.chat.id, text='Выберите месяц для отображения свободных для записи окон', reply_markup=kb.main_windows_keyboard) 
             
     else:
-        bot.send_message(message.chat.id, text='К такому меня жизнь не готовила) Если что-то не получается, пользуйтесь, пожалуйста, кнопками меню бота')
+        bot.send_message(message.chat.id, text=msg.UNKNOWN_COMMAND)
 
 @bot.callback_query_handler(func=lambda call: True)
 def func(call):
@@ -298,10 +307,14 @@ def func(call):
         else:
             mess_text = f'Отлично, вы записаны на <b>{procedure}</b> на <b>{ru_visit_date}, {book_time}</b>'
             db.add_visit(client_name, book_date, ru_visit_date, start_time, finish_time, procedure_id, 'active', price)
+            gf.clndr.add_visit(gf.calendar_id_2, booked_date, call.from_user.id, procedure_id, client_name, price)
             # db.show_visits()
-        
+            
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup='', parse_mode='HTML')
             bot.send_message(chat_id=call.message.chat.id, text='Главное меню', reply_markup=kb.main_keyboard)
+    
+            for admin_id in admin_ids:
+                bot.send_message(chat_id=admin_id, text=f'{client_name} записался на {db.procedure_name_from_id(procedure_id)} на {booked_date}')
     
     # подготовка и вывод статистика за выбранный месяц
     elif call.data.startswith('stats_shift='):

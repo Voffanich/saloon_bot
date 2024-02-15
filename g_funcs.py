@@ -10,6 +10,7 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
 import ru_dates as rd
+from db_handler import db
 
 
 class Google_calendar:
@@ -147,7 +148,7 @@ class Google_calendar:
 
         windows_time_format.sort()
                     
-        print(f'{windows_time_format=}')
+        # print(f'{windows_time_format=}')
         
         for date in windows_time_format:
             day = dt.strftime(date, '%d.%m') + f', {rd.ru_d_short(date)}'
@@ -157,7 +158,7 @@ class Google_calendar:
             else:
                 windows_dict[day] = [time]
                 
-        print(f'{windows_dict=}')
+        # print(f'{windows_dict=}')
         
         return windows_dict
         
@@ -173,6 +174,7 @@ class Google_calendar:
             for event in events['items']:
                 if event['start']['dateTime'] == time_min and event['summary'].lower() == 'окно':
                     window = event
+                
         except Exception as ex:
             print(f'Some fucking error happened')
             print(ex)
@@ -198,21 +200,92 @@ class Google_calendar:
         try:
             events = self.service.events().list(calendarId=calendar_id, timeMin = time_min, 
                                            timeMax = time_max, singleEvents = True).execute()
+            
             for event in events['items']:
-                if event['start']['dateTime'] == time_min and 'бронь' in event['summary'].lower():
-                    print('OW window found')
+                if event['start']['dateTime'] == time_min: 
+                    # print('CWO window found')
                     window = event
+                    
+                    # print(f'CWO {window["description"]=}\n{telegram_id}')
+                    
+                    if 'бронь' in event['summary'].lower() and int(window['description']) == telegram_id:
+                        # print(f'CWO check 1')
+                        return True
+                    elif 'окно' in event['summary'].lower():
+                        # print(f'CWO check 2')
+                        return True
+                    else:
+                        # print(f'CWO check 3')
+                        return False
+                
         except Exception as ex:
             print(f'Some fucking error happened')
             print(ex)
             return False
         
-        if window['description'] == telegram_id:
-            return True
-        else:
-            return False
         
+    
+    
+    def add_visit(self, calendar_id, booked_date, telegram_id, procedure_id, client_name, price) -> bool:
         
+        time_min = dt.strftime(booked_date, '%Y-%m-%dT%H:%M:%S+03:00')
+        time_max = dt.strftime(booked_date + timedelta(hours=12), '%Y-%m-%dT%H:%M:%S+03:00')
+        
+        try:
+            events = self.service.events().list(calendarId=calendar_id, timeMin = time_min, 
+                                           timeMax = time_max, singleEvents = True).execute()
+            for event in events['items']:
+                if event['start']['dateTime'] == time_min: 
+                    print('AV window found')
+                    window = event
+                    
+                    if 'бронь' in event['summary'].lower() and int(window['description']) == telegram_id or 'окно' in event['summary'].lower():
+                        window['summary'] = client_name + f' {price}'
+                        window['description'] = db.procedure_name_from_id(procedure_id) + '\ntg'   
+
+                        occupied_window = self.service.events().update(calendarId=calendar_id, eventId=window['id'], body=window).execute()
+                        
+                        print(f'Window filled with visit \n {occupied_window["summary"]=}\n{occupied_window["description"]=}')
+                    
+                        
+        except Exception as ex:
+            print(f'Some fucking error happened')
+            print(ex)
+            return False   
+    
+    
+    def reset_occupations(self, calendar_id, days_to_show_windows, mins_to_occupy_window) -> bool:
+        time_min = dt.strftime(dt.now() - timedelta(minutes=mins_to_occupy_window + 10), '%Y-%m-%dT%H:%M:%S+03:00')
+        time_max = dt.strftime(dt.now() + timedelta(days=days_to_show_windows), '%Y-%m-%dT%H:%M:%S+03:00')
+        
+        try:
+            events = self.service.events().list(calendarId=calendar_id, timeMin = time_min, 
+                                        timeMax = time_max, singleEvents = True).execute()
+            
+            if events:
+                for event in events['items']:
+                    
+                    if 'summary' in event and 'бронь' in event['summary'].lower():
+                        occupation_time = dt.strptime(event['summary'].split(' ')[2] + event['summary'].split(' ')[3], "%Y-%m-%d%H:%M")                  
+                        print(f'RO {occupation_time=}')
+                        
+                        if occupation_time < dt.now() - timedelta(minutes=mins_to_occupy_window):
+                            event['summary'] = 'Окно'
+                            event['description'] = ''
+                            
+                            occupied_window = self.service.events().update(calendarId=calendar_id, eventId=event['id'], body=event).execute()
+                            
+                            print(f'RO window reset to unoccupied {occupied_window["start"]["dateTime"]}')  
+                            
+                            return True
+            else:
+                print('No occupied windows found')    
+                
+        except Exception as ex:
+            print(f'Some fucking error happened')
+            print(ex)
+            return False  
+            
     
     def show_stats(self, calendar_id, month_shift: int):
         

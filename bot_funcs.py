@@ -13,6 +13,7 @@ import pandas as pd
 import portion as p
 import schedule
 
+import g_funcs as gf
 import ru_dates as rd
 from client import Client
 from db_handler import db
@@ -140,11 +141,14 @@ def check_flag(clients: dict, id: int) -> str:
         return 'Id not found in database'
 
 # function for asyncronous scheduled tasks of the bot, like backups, messaging, reminders   
-def scheduled_tasks(db_file_name: str, days_to_store_backups: int):
+def scheduled_tasks(db_file_name: str, days_to_store_backups: int, calendar_id: str, days_to_show_windows: int, 
+                        mins_to_occupy_window: int):
     # db file backup every day
     schedule.every().day.at('02:00').do(db.backup_db_file, db_file_name, 'daily')
     # delete files of db backups older than days_to_store_backups
     schedule.every().day.at('02:00').do(db.clear_old_db_backups, days_to_store_backups, 'backups')
+    
+    schedule.every().minute.at(":01").do(gf.clndr.reset_occupations, calendar_id, days_to_show_windows, mins_to_occupy_window)
     while True:
         schedule.run_pending()
         time.sleep(10)
