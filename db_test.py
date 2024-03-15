@@ -10,13 +10,13 @@ from db_handler import db
 
 # RECREATE DB
 # db.setup()
-# db.update_procedures()
+db.update_procedures()
 
-procedures = db.get_procedures_data()
+# procedures = db.get_procedures_data()
 
 # gf.clndr.show_windows(gf.calendar_id_2, 0)
 
-gf.clndr.get_available_times(gf.calendar_id_2, 30, 30)
+# gf.clndr.get_available_times(gf.calendar_id_2, 30, 30)
 
 
 
@@ -24,9 +24,9 @@ gf.clndr.get_available_times(gf.calendar_id_2, 30, 30)
 
 # print(bf.get_available_times(1))
 # print(bf.get_available_times_2(procedures, 2))
-timetable = bf.get_available_times(procedures, 1, 20)
+# timetable = bf.get_available_times(procedures, 1, 20)
 
-print(timetable)
+# print(timetable)
 
 # for key in timetable:
 #     print(key, timetable[key])

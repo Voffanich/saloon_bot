@@ -22,8 +22,9 @@ admin_keyboard.add(*btns)
 
 # клавиатура главного меню
 main_keyboard =  types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-btn_texts = ['Записаться', 'Перенести/отменить визит', 'Проверить запись', 
-            'Настроить напоминания', 'Прайс', 'Обо мне', 'Как добраться', 'Что может бот?']
+btn_texts = ['Записаться', 'Прайс', 'Обо мне', 'Как добраться', 'Что может бот?', 'Написать мастеру']
+# btn_texts = ['Записаться', 'Перенести/отменить визит', 'Проверить запись', 
+#             'Настроить напоминания', 'Прайс', 'Обо мне', 'Как добраться', 'Что может бот?']
 btns = [types.KeyboardButton(text) for text in btn_texts]
 main_keyboard.add(*btns)
 

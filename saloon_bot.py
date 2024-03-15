@@ -8,8 +8,8 @@ from telebot import types
 import bot_funcs as bf
 import g_funcs as gf
 import keyboards as kb
-import messages as msg
 import ru_dates as rd
+import user_data.messages as msg
 from client import Client
 from credentials import admin_ids, admin_usernames, apikey
 from db_handler import db
@@ -95,7 +95,7 @@ def func(message):
         # clients[message.from_user.id].last_name = message.from_user.last_name
                 
         if db.client_exists(message.from_user.id):
-            bot.send_message(message.chat.id, text='Такс, выбрайте процедуру, на которую хотите прийти', reply_markup=kb.procedures_keyboard)
+            bot.send_message(message.chat.id, text=msg.PROCEDURES_COMMENT, reply_markup=kb.procedures_keyboard)
         else:
             btn1 = types.KeyboardButton("Оставляем")
             btn2 = types.KeyboardButton("Изменить имя")
@@ -118,7 +118,7 @@ def func(message):
         
         
     elif (message.text == 'Прайс'):
-        bot.send_message(message.chat.id, text='Тебе кабзда', reply_markup=kb.main_keyboard)
+        bot.send_message(message.chat.id, text='Скоро добавим)', reply_markup=kb.main_keyboard)
         
         
     elif (message.text == 'Обо мне'):
@@ -127,6 +127,10 @@ def func(message):
     
     elif (message.text == 'Как добраться'):
         bot.send_message(message.chat.id, text=msg.LOCATION, reply_markup=kb.main_keyboard, parse_mode='HTML')
+    
+    
+    elif (message.text == 'Написать мастеру'):
+        bot.send_message(message.chat.id, text=msg.TG_CONTACT, reply_markup=kb.main_keyboard, parse_mode='HTML')    
         
         
     elif (message.text == 'Оставляем'):
@@ -196,7 +200,7 @@ def func(call):
     
     # вывод доступных для посещения процедур    
     elif call.data == 'choose_procedure':
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Такс, выбрайте процедуру, на которую хотите прийти', reply_markup=kb.procedures_keyboard)
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=msg.PROCEDURES_COMMENT, reply_markup=kb.procedures_keyboard)
     
     # возврат в главное меню бота
     elif call.data == 'Главное меню':
@@ -286,7 +290,7 @@ def func(call):
         procedure = procedures[procedure_id -1]['procedure']
         # procedure = bf.procedure_name_from_id(procedures, procedure_id)
         
-        client_name = clients[call.from_user.id].first_name + ' ' +  clients[call.from_user.id].last_name
+        client_name = clients[call.from_user.id].first_name or '' + ' ' +  clients[call.from_user.id].last_name or ''
        
         price = int(procedures[procedure_id - 1]['price'])
         
