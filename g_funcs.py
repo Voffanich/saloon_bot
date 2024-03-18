@@ -2,6 +2,7 @@ import calendar
 import datetime
 import pprint
 import re
+import time
 from datetime import datetime as dt
 from datetime import timedelta
 from pathlib import Path
@@ -10,6 +11,7 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
 import ru_dates as rd
+import portion as p
 from db_handler import db
 
 
@@ -434,6 +436,82 @@ class Google_calendar:
         return message_text
         # return total_bookings, remained_bookings
     
+    
+    def place_windows(self, calendar_id: str, window_duration: str, mode: str, days_off: list, work_day_start: str, work_day_finish: str, period_start: str, period_finish: str):
+        
+        color_code = 10     # basilic in google calendar (dark green)
+        # windows = [p.open(dt.strptime('2024-04-04 10:00:00', '%Y-%m-%d %H:%M:%S'), dt.strptime('2024-04-04 10:30:00', '%Y-%m-%d %H:%M:%S'))]
+        windows = []
+        
+        time_min = f'{period_start}T00:00:00+03:00'
+        time_max = f'{period_finish}T23:59:59+03:00'
+        
+        try:
+            events_result = self.service.events().list(calendarId=calendar_id, timeMin = time_min, timeMax = time_max, fields = 'items(id,summary,start,end,description)',
+                                            orderBy = 'startTime', singleEvents = True).execute()       
+        except Exception as ex:
+            print(ex)
+            
+        existing_events = events_result.get('items', [])
+        
+        time_min_dt = dt.strptime(time_min, '%Y-%m-%dT%H:%M:%S+03:00')
+        time_max_dt = dt.strptime(time_max, '%Y-%m-%dT%H:%M:%S+03:00')
+        
+        days_to_place_windows = (time_max_dt - time_min_dt).days + 1    # getting the nubmer of days to place windows including start date and finish date days
+        
+        date = time_min_dt
+        work_events = []
+        other_events = []
+        
+        while True:
+            if date.day not in days_off:
+                print(f'{date=}')
+                
+                for event in existing_events:
+                    if dt.fromisoformat(event['start']['dateTime']).date() == date.date():
+                        print(f'Event found')
+                        if 'маникюр' in event['description'].lower() or 'педикюр' in event['description'].lower() or 'окно' in event['summary'].lower():
+                            work_events.add(p.open(dt.fromisoformat(event['start']['dateTime']), dt.fromisoformat(event['end']['dateTime'])))
+                        else:
+                            other_events.add(p.open(dt.fromisoformat(event['start']['dateTime']), dt.fromisoformat(event['end']['dateTime']))) 
+                
+            
+            date += timedelta(days=1)
+            
+            if date > time_max_dt:
+                break
+        
+
+        if windows:
+            for window in windows:
+                window_start_time = dt.strftime(window.lower, '%Y-%m-%dT%H:%M:%S+03:00')
+                window_finish_time = dt.strftime(window.upper, '%Y-%m-%dT%H:%M:%S+03:00')
+                
+                window_event = {
+                'summary': f'Окно {color_code}',
+                # 'location': 'Минск',
+                'description': '',
+                'start': {
+                    'dateTime': f'{window_start_time}',
+                    'timeZone': 'Europe/Minsk' 
+                },
+                'end': {
+                    'dateTime': f'{window_finish_time}',
+                    'timeZone': 'Europe/Minsk' 
+                },      
+                'colorId':f'{color_code}'                 
+                } 
+
+                try:
+                    event = clndr.add_event(calendar_id=calendar_id, event=window_event)
+                    
+                except Exception as ex:
+                    print(ex)
+                
+                time.sleep(0.5)    
+            
+        
+        
 
 clndr = Google_calendar()
 calendar_id_1 = 'voffanich@gmail.com'
@@ -513,6 +591,7 @@ print(f'-------------------------')
      'end': {'dateTime': '2022-11-28T21:00:00+03:00', 'timeZone': 'Europe/Minsk'}
      
 """
+
 
 # clndr.show_stats(calendar_id=calendar_id_2, month_shift=0)
 
