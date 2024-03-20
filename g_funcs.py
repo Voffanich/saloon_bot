@@ -437,7 +437,8 @@ class Google_calendar:
         # return total_bookings, remained_bookings
     
     
-    def place_windows(self, calendar_id: str, window_duration: str, mode: str, days_off: list, work_day_start: str, work_day_finish: str, period_start: str, period_finish: str):
+    def place_windows(self, calendar_id: str, window_duration: str, mode: str, days_off: list, work_day_start: str, work_day_finish: str, period_start: str, period_finish: str,
+                      events_gap: int, events_shift: int):
         
         color_code = 10     # basilic in google calendar (dark green)
         # windows = [p.open(dt.strptime('2024-04-04 10:00:00', '%Y-%m-%d %H:%M:%S'), dt.strptime('2024-04-04 10:30:00', '%Y-%m-%d %H:%M:%S'))]
@@ -462,6 +463,7 @@ class Google_calendar:
         date = time_min_dt
         work_events = []
         other_events = []
+        events_frames = {'work':[], 'other':[]}
         
         while True:
             if date.day not in days_off:
@@ -470,13 +472,42 @@ class Google_calendar:
                 for event in existing_events:
                     if dt.fromisoformat(event['start']['dateTime']).date() == date.date():
                         print(f'Event found')
-                        if 'маникюр' in event['description'].lower() or 'педикюр' in event['description'].lower() or 'окно' in event['summary'].lower():
-                            work_events.add(p.open(dt.fromisoformat(event['start']['dateTime']), dt.fromisoformat(event['end']['dateTime'])))
+                        print(event)
+                        if 'description' in event and 'маникюр' in event['description'].lower() or 'description' in event and 'педикюр' in event['description'].lower() or 'summary' in event  and 'окно' in event['summary'].lower():
+                            events_frames['work'].append(p.open(dt.fromisoformat(event['start']['dateTime']), dt.fromisoformat(event['end']['dateTime'])))
+                            work_events.append(p.open(dt.fromisoformat(event['start']['dateTime']), dt.fromisoformat(event['end']['dateTime'])))
                         else:
-                            other_events.add(p.open(dt.fromisoformat(event['start']['dateTime']), dt.fromisoformat(event['end']['dateTime']))) 
+                            events_frames['other'].append(p.open(dt.fromisoformat(event['start']['dateTime']), dt.fromisoformat(event['end']['dateTime'])))
+                            other_events.append(p.open(dt.fromisoformat(event['start']['dateTime']), dt.fromisoformat(event['end']['dateTime']))) 
                 
+                all_events: list = (work_events + other_events)
+                all_events.sort()
+                print(f'{all_events=}')
+                        
+                if not all_events:
+                    print('No existing events')
+                    current_time = date + timedelta(hours=int(work_day_start.split(':')[0]), minutes=int(work_day_start.split(':')[1]))    
+                    window_length = timedelta(hours=int(window_duration.split(':')[0]), minutes=int(window_duration.split(':')[1]))  
+                    day_finish_time = date + timedelta(hours=int(work_day_finish.split(':')[0]), minutes=int(work_day_finish.split(':')[1]))  
+                    events_shift_time = timedelta(minutes=events_shift)  
+                        
+                    while True:
+                        print(current_time)
+                        windows.append(p.open(current_time, current_time + window_length))
+                        current_time += window_length
+                        
+                        if current_time + window_length - day_finish_time > events_shift_time:
+                            break
+                else:    
+                    pass
+                        
+                        
             
             date += timedelta(days=1)
+            events_frames = {'work':[], 'other':[]}
+            all_events = []
+            work_events = []
+            other_events = []
             
             if date > time_max_dt:
                 break
@@ -488,7 +519,7 @@ class Google_calendar:
                 window_finish_time = dt.strftime(window.upper, '%Y-%m-%dT%H:%M:%S+03:00')
                 
                 window_event = {
-                'summary': f'Окно {color_code}',
+                'summary': f'Окно',
                 # 'location': 'Минск',
                 'description': '',
                 'start': {
