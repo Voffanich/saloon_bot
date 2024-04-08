@@ -466,6 +466,7 @@ class Google_calendar:
         date = time_min_dt
         work_events = []
         other_events = []
+        events_frames = {'work':[], 'other':[]}
         
         while True:
             if date.day not in days_off:
@@ -477,10 +478,37 @@ class Google_calendar:
                         if 'маникюр' in event['description'].lower() or 'педикюр' in event['description'].lower() or 'окно' in event['summary'].lower().strip():
                             work_events.add(p.open(dt.fromisoformat(event['start']['dateTime']), dt.fromisoformat(event['end']['dateTime'])))
                         else:
-                            other_events.add(p.open(dt.fromisoformat(event['start']['dateTime']), dt.fromisoformat(event['end']['dateTime']))) 
+                            events_frames['other'].append(p.open(dt.fromisoformat(event['start']['dateTime']), dt.fromisoformat(event['end']['dateTime'])))
+                            other_events.append(p.open(dt.fromisoformat(event['start']['dateTime']), dt.fromisoformat(event['end']['dateTime']))) 
                 
+                all_events: list = (work_events + other_events)
+                all_events.sort()
+                print(f'{all_events=}')
+                        
+                if not all_events:
+                    print('No existing events')
+                    current_time = date + timedelta(hours=int(work_day_start.split(':')[0]), minutes=int(work_day_start.split(':')[1]))    
+                    window_length = timedelta(hours=int(window_duration.split(':')[0]), minutes=int(window_duration.split(':')[1]))  
+                    day_finish_time = date + timedelta(hours=int(work_day_finish.split(':')[0]), minutes=int(work_day_finish.split(':')[1]))  
+                    events_shift_time = timedelta(minutes=events_shift)  
+                        
+                    while True:
+                        print(current_time)
+                        windows.append(p.open(current_time, current_time + window_length))
+                        current_time += window_length
+                        
+                        if current_time + window_length - day_finish_time > events_shift_time:
+                            break
+                else:    
+                    pass
+                        
+                        
             
             date += timedelta(days=1)
+            events_frames = {'work':[], 'other':[]}
+            all_events = []
+            work_events = []
+            other_events = []
             
             if date > time_max_dt:
                 break
