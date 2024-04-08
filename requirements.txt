@@ -4,7 +4,11 @@ google-auth==2.14.1
 google-auth-httplib2==0.1.0
 google-auth-oauthlib==0.7.1
 googleapis-common-protos==1.57.0
-pandas==1.5.2
+pandas==2.2.1
 portion==2.2.0
 pyTelegramBotAPI==4.12.0
 schedule==1.1.0
+telebot==0.0.5
+portion==2.4.2
+schedule==1.2.1
+google_api_python_client==2.124.0
