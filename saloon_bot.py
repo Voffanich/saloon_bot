@@ -25,7 +25,8 @@ sсheduled_tasks_thread = threading.Thread(target = bf.scheduled_tasks,
                                                     'days_to_store_backups':cfg_general['days_to_store_db_backups'], 
                                                     'calendar_id':gf.calendar_id_2,
                                                     'days_to_show_windows':cfg_general['days_to_show_booktimes'],
-                                                    'mins_to_occupy_window':cfg_general['mins_to_occupy_window']}, daemon = True)
+                                                    'mins_to_occupy_window':cfg_general['mins_to_occupy_window'],
+                                                    'window_colors':cfg_general['window_colors']}, daemon = True)
 
 bot = telebot.TeleBot(apikey)
 
@@ -246,7 +247,7 @@ def func(call):
             dates_keyboard = kb.create_dates_keyboard(dates)
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup=dates_keyboard, parse_mode='HTML')
         else:  
-            if gf.clndr.occupy_window(gf.calendar_id_2, booked_date, call.from_user.id): 
+            if gf.clndr.occupy_window(gf.calendar_id_2, booked_date, call.from_user.id, cfg_general['window_colors']): 
                 mess_text = f'Записываю вас на <b>{procedure_name}</b> на <b>{book_date_ru}, {book_time}</b>?'
                 confirm_book_keyboard = kb.create_confirm_book_keyboard(procedures, procedure_id, booked_date_ru)
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup=confirm_book_keyboard, parse_mode='HTML') 
@@ -290,7 +291,9 @@ def func(call):
         procedure = procedures[procedure_id -1]['procedure']
         # procedure = bf.procedure_name_from_id(procedures, procedure_id)
         
-        client_name = clients[call.from_user.id].first_name or '' + ' ' +  clients[call.from_user.id].last_name or ''
+        # client_name = clients[call.from_user.id].first_name or '' + ' ' +  clients[call.from_user.id].last_name or ''
+        client_name = clients[call.from_user.id].first_name + ' ' +  clients[call.from_user.id].last_name or ''
+        phone_number = clients[call.from_user.id].phone_number
        
         price = int(procedures[procedure_id - 1]['price'])
         
@@ -311,7 +314,7 @@ def func(call):
         else:
             mess_text = f'Отлично, вы записаны на <b>{procedure}</b> на <b>{ru_visit_date}, {book_time}</b>'
             db.add_visit(client_name, book_date, ru_visit_date, start_time, finish_time, procedure_id, 'active', price)
-            gf.clndr.add_visit(gf.calendar_id_2, booked_date, call.from_user.id, procedure_id, client_name, price)
+            gf.clndr.add_visit(gf.calendar_id_2, booked_date, call.from_user, procedure_id, client_name, phone_number, price, cfg_general['window_colors'])
             # db.show_visits()
             
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=mess_text, reply_markup='', parse_mode='HTML')

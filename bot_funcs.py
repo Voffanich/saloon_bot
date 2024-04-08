@@ -142,13 +142,13 @@ def check_flag(clients: dict, id: int) -> str:
 
 # function for asyncronous scheduled tasks of the bot, like backups, messaging, reminders   
 def scheduled_tasks(db_file_name: str, days_to_store_backups: int, calendar_id: str, days_to_show_windows: int, 
-                        mins_to_occupy_window: int):
+                        mins_to_occupy_window: int, window_colors: dict):
     # db file backup every day
     schedule.every().day.at('02:00').do(db.backup_db_file, db_file_name, 'daily')
     # delete files of db backups older than days_to_store_backups
     schedule.every().day.at('02:00').do(db.clear_old_db_backups, days_to_store_backups, 'backups')
     
-    schedule.every().minute.at(":01").do(gf.clndr.reset_occupations, calendar_id, days_to_show_windows, mins_to_occupy_window)
+    schedule.every().minute.at(":01").do(gf.clndr.reset_occupations, calendar_id, days_to_show_windows, mins_to_occupy_window, window_colors)
     while True:
         schedule.run_pending()
         time.sleep(10)

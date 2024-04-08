@@ -4,6 +4,11 @@
         "days_to_store_db_backups": 30,
         "days_to_show_booktimes": 40,
         "mins_to_nearest_book": 30,
-        "mins_to_occupy_window": 5
+        "mins_to_occupy_window": 5,
+        "window_colors":{
+            "window": 10,
+            "occupied_window": 11,
+            "procedure": 3
+        }
     }    
 }

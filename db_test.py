@@ -16,9 +16,14 @@ from db_handler import db
 days_off = [4, 7, 12, 13, 14, 15, 21, 22, 25, 27, 28]
 work_day_start = '10:00'
 work_day_finish = '21:00'
+window_colors = {
+            "window": 10,
+            "occupied_window": 6,
+            "procedure": 3
+        }
 
 gf.clndr.place_windows(gf.calendar_id_2, '01:50', mode='month', days_off=days_off, work_day_start=work_day_start, work_day_finish=work_day_finish,
-                       period_start='2024-04-01', period_finish='2024-04-30')
+                       period_start='2024-04-01', period_finish='2024-04-30', window_colors=window_colors)
 
 # gf.clndr.get_available_times(gf.calendar_id_2, 30, 30)
 

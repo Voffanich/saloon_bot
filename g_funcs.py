@@ -83,7 +83,7 @@ class Google_calendar:
         
         for item in events['items']:
             if 'summary' in item:
-                if 'окно' in item['summary'].lower():
+                if 'окно' in item['summary'].lower().strip():
                     windows_count += 1 
                     # getting start time of window in format '2023-01-08T14:20:00'
                     windows.append(item['start']['dateTime'].split('+')[0])
@@ -142,7 +142,7 @@ class Google_calendar:
         
         for item in events['items']:
             if 'summary' in item:
-                if 'окно' in item['summary'].lower():
+                if 'окно' in item['summary'].lower().strip():
                     # windows.append(item['start']['dateTime'].split('+')[0])
                     # getting start time of window in datetime format
                     windows_time_format.append(dt.strptime(item['start']['dateTime']
@@ -165,7 +165,7 @@ class Google_calendar:
         return windows_dict
         
     
-    def occupy_window(self, calendar_id, start_time, telegram_id) -> bool:
+    def occupy_window(self, calendar_id, start_time, telegram_id, window_colors) -> bool:
         
         time_min = dt.strftime(start_time, '%Y-%m-%dT%H:%M:%S+03:00')
         time_max = dt.strftime(start_time + timedelta(hours=12), '%Y-%m-%dT%H:%M:%S+03:00')
@@ -174,19 +174,20 @@ class Google_calendar:
             events = self.service.events().list(calendarId=calendar_id, timeMin = time_min, 
                                            timeMax = time_max, singleEvents = True).execute()
             for event in events['items']:
-                if event['start']['dateTime'] == time_min and event['summary'].lower() == 'окно':
-                    window = event
+                if event['start']['dateTime'] == time_min and event['summary'].lower().strip() == 'окно':
+                    window_to_occupy = event
                 
         except Exception as ex:
             print(f'Some fucking error happened')
             print(ex)
             return False
             
-        window['summary'] = f'Бронь с {dt.strftime(dt.now(),"%Y-%m-%d %H:%M")}'
-        window['description'] = telegram_id
+        window_to_occupy['summary'] = f'Бронь с {dt.strftime(dt.now(),"%Y-%m-%d %H:%M")}'
+        window_to_occupy['description'] = telegram_id
+        window_to_occupy['colorId'] = window_colors['occupied_window']
                 
         
-        occupied_window = self.service.events().update(calendarId=calendar_id, eventId=window['id'], body=window).execute()
+        occupied_window = self.service.events().update(calendarId=calendar_id, eventId=window_to_occupy['id'], body=window_to_occupy).execute()
         
         print(f'Window occupied \n {occupied_window["summary"]}')
         
@@ -213,7 +214,7 @@ class Google_calendar:
                     if 'бронь' in event['summary'].lower() and int(window['description']) == telegram_id:
                         # print(f'CWO check 1')
                         return True
-                    elif 'окно' in event['summary'].lower():
+                    elif 'окно' in event['summary'].lower().strip():
                         # print(f'CWO check 2')
                         return True
                     else:
@@ -228,7 +229,7 @@ class Google_calendar:
         
     
     
-    def add_visit(self, calendar_id, booked_date, telegram_id, procedure_id, client_name, price) -> bool:
+    def add_visit(self, calendar_id, booked_date, user_info, procedure_id, client_name, phone_number, price, window_colors) -> bool:
         
         time_min = dt.strftime(booked_date, '%Y-%m-%dT%H:%M:%S+03:00')
         time_max = dt.strftime(booked_date + timedelta(hours=12), '%Y-%m-%dT%H:%M:%S+03:00')
@@ -239,13 +240,14 @@ class Google_calendar:
             for event in events['items']:
                 if event['start']['dateTime'] == time_min: 
                     print('AV window found')
-                    window = event
+                    window_to_add = event
                     
-                    if 'бронь' in event['summary'].lower() and int(window['description']) == telegram_id or 'окно' in event['summary'].lower():
-                        window['summary'] = client_name + f' {price}'
-                        window['description'] = db.procedure_name_from_id(procedure_id) + '\ntg'   
+                    if 'бронь' in event['summary'].lower() and int(window_to_add['description']) == user_info.id or 'окно' in event['summary'].lower().strip():
+                        window_to_add['summary'] = client_name + f' {price}'
+                        window_to_add['description'] = f'{phone_number}\n' + f'https://t.me/{user_info.username}\n' + db.procedure_name_from_id(procedure_id) + '\ntg'   
+                        window_to_add['colorId'] = window_colors['procedure']
 
-                        occupied_window = self.service.events().update(calendarId=calendar_id, eventId=window['id'], body=window).execute()
+                        occupied_window = self.service.events().update(calendarId=calendar_id, eventId=window_to_add['id'], body=window_to_add).execute()
                         
                         print(f'Window filled with visit \n {occupied_window["summary"]=}\n{occupied_window["description"]=}')
                     
@@ -256,7 +258,7 @@ class Google_calendar:
             return False   
     
     
-    def reset_occupations(self, calendar_id, days_to_show_windows, mins_to_occupy_window) -> bool:
+    def reset_occupations(self, calendar_id, days_to_show_windows, mins_to_occupy_window, window_colors) -> bool:
         time_min = dt.strftime(dt.now() - timedelta(minutes=mins_to_occupy_window + 10), '%Y-%m-%dT%H:%M:%S+03:00')
         time_max = dt.strftime(dt.now() + timedelta(days=days_to_show_windows), '%Y-%m-%dT%H:%M:%S+03:00')
         
@@ -274,6 +276,7 @@ class Google_calendar:
                         if occupation_time < dt.now() - timedelta(minutes=mins_to_occupy_window):
                             event['summary'] = 'Окно'
                             event['description'] = ''
+                            event['colorId'] = window_colors['window']
                             
                             occupied_window = self.service.events().update(calendarId=calendar_id, eventId=event['id'], body=event).execute()
                             
@@ -333,7 +336,7 @@ class Google_calendar:
            
             if 'summary' in item:
                 # print(item['summary'])    
-                if 'окно' in item['summary'].lower() and dt.strptime(item['start']['dateTime'].split('+')[0], '%Y-%m-%dT%H:%M:%S') > dt.now():
+                if 'окно' in item['summary'].lower().strip() and dt.strptime(item['start']['dateTime'].split('+')[0], '%Y-%m-%dT%H:%M:%S') > dt.now():
                     # print(item['summary'], item['start'], item['end'])
                     windows += 1    
             # else: 
@@ -378,8 +381,8 @@ class Google_calendar:
         print(f'{manicure_stats["total_count"]=}, {manicure_stats["priced_count"]=}, {manicure_stats["sum"]=} ')
         print(f'{pedicure_stats["total_count"]=}, {pedicure_stats["priced_count"]=}, {pedicure_stats["sum"]=} ')
         
-        manicure_price = 54
-        pedicure_price = 54
+        manicure_price = 59
+        pedicure_price = 52
         
         if manicure_stats['total_count'] > 0:
             if manicure_stats['priced_count'] > 0:
@@ -423,6 +426,7 @@ class Google_calendar:
 
     Средний чек за маникюр: <b>{round(average_manicure_check, 2)} р.</b> (процедур: {manicure_stats["total_count"]})
     Средний чек за педикюр: <b>{round(average_pedicure_check, 2)} р.</b> (процедур: {pedicure_stats["total_count"]})
+    Cредний чек за процедуру: <b>{round(total_income/(pedicure_stats["total_count"] + manicure_stats["total_count"]), 2)} р.</b> (процедур: {pedicure_stats["total_count"] + manicure_stats["total_count"]})
     Всего заработано: <b>{round(total_income, 2)} р.</b>
             """
             message_text += f"""
@@ -437,7 +441,7 @@ class Google_calendar:
         # return total_bookings, remained_bookings
     
     
-    def place_windows(self, calendar_id: str, window_duration: str, mode: str, days_off: list, work_day_start: str, work_day_finish: str, period_start: str, period_finish: str):
+    def place_windows(self, calendar_id: str, window_duration: str, mode: str, days_off: list, work_day_start: str, work_day_finish: str, period_start: str, period_finish: str, window_colors: dict):
         
         color_code = 10     # basilic in google calendar (dark green)
         # windows = [p.open(dt.strptime('2024-04-04 10:00:00', '%Y-%m-%d %H:%M:%S'), dt.strptime('2024-04-04 10:30:00', '%Y-%m-%d %H:%M:%S'))]
@@ -470,7 +474,7 @@ class Google_calendar:
                 for event in existing_events:
                     if dt.fromisoformat(event['start']['dateTime']).date() == date.date():
                         print(f'Event found')
-                        if 'маникюр' in event['description'].lower() or 'педикюр' in event['description'].lower() or 'окно' in event['summary'].lower():
+                        if 'маникюр' in event['description'].lower() or 'педикюр' in event['description'].lower() or 'окно' in event['summary'].lower().strip():
                             work_events.add(p.open(dt.fromisoformat(event['start']['dateTime']), dt.fromisoformat(event['end']['dateTime'])))
                         else:
                             other_events.add(p.open(dt.fromisoformat(event['start']['dateTime']), dt.fromisoformat(event['end']['dateTime']))) 
@@ -488,7 +492,7 @@ class Google_calendar:
                 window_finish_time = dt.strftime(window.upper, '%Y-%m-%dT%H:%M:%S+03:00')
                 
                 window_event = {
-                'summary': f'Окно {color_code}',
+                'summary': f'Окно',
                 # 'location': 'Минск',
                 'description': '',
                 'start': {
@@ -499,7 +503,7 @@ class Google_calendar:
                     'dateTime': f'{window_finish_time}',
                     'timeZone': 'Europe/Minsk' 
                 },      
-                'colorId':f'{color_code}'                 
+                'colorId':f'{window_colors['окно']}'                 
                 } 
 
                 try:
