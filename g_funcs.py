@@ -441,7 +441,8 @@ class Google_calendar:
         # return total_bookings, remained_bookings
     
     
-    def place_windows(self, calendar_id: str, window_duration: str, mode: str, days_off: list, work_day_start: str, work_day_finish: str, period_start: str, period_finish: str, window_colors: dict):
+    def place_windows(self, calendar_id: str, window_duration: str, mode: str, days_off: list, work_day_start: str, work_day_finish: str, period_start: str,
+                      period_finish: str, window_colors: dict, events_gap: int, events_shift: int):
         
         color_code = 10     # basilic in google calendar (dark green)
         # windows = [p.open(dt.strptime('2024-04-04 10:00:00', '%Y-%m-%d %H:%M:%S'), dt.strptime('2024-04-04 10:30:00', '%Y-%m-%d %H:%M:%S'))]

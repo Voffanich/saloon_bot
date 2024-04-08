@@ -23,7 +23,7 @@ window_colors = {
         }
 
 gf.clndr.place_windows(gf.calendar_id_2, '01:50', mode='month', days_off=days_off, work_day_start=work_day_start, work_day_finish=work_day_finish,
-                       period_start='2024-04-01', period_finish='2024-04-30', window_colors=window_colors)
+                       period_start='2024-04-01', period_finish='2024-04-30', window_colors=window_colors, events_gap=30, events_shift=30)
 
 # gf.clndr.get_available_times(gf.calendar_id_2, 30, 30)
 
