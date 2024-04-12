@@ -381,8 +381,8 @@ class Google_calendar:
         print(f'{manicure_stats["total_count"]=}, {manicure_stats["priced_count"]=}, {manicure_stats["sum"]=} ')
         print(f'{pedicure_stats["total_count"]=}, {pedicure_stats["priced_count"]=}, {pedicure_stats["sum"]=} ')
         
-        manicure_price = 59
-        pedicure_price = 52
+        manicure_price = 56
+        pedicure_price = 56
         
         if manicure_stats['total_count'] > 0:
             if manicure_stats['priced_count'] > 0:
