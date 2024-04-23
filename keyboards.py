@@ -22,7 +22,7 @@ admin_keyboard.add(*btns)
 
 # клавиатура главного меню
 main_keyboard =  types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-btn_texts = ['Записаться', 'Прайс', 'Обо мне', 'Как добраться', 'Что может бот?', 'Написать мастеру']
+btn_texts = ['Записаться', 'Мои записи', 'Отменить запись', 'Прайс', 'Обо мне', 'Как добраться', 'Что может бот?', 'Написать мастеру']
 # btn_texts = ['Записаться', 'Перенести/отменить визит', 'Проверить запись', 
 #             'Настроить напоминания', 'Прайс', 'Обо мне', 'Как добраться', 'Что может бот?']
 btns = [types.KeyboardButton(text) for text in btn_texts]
@@ -102,3 +102,10 @@ def create_dates_keyboard(dates: dict) -> types.InlineKeyboardMarkup:
     dates_keyboard.row(btns[-1])              
     
     return dates_keyboard
+
+    
+def  create_cancel_booking_keyboard(booking_id: str, count: int) -> types.InlineKeyboardMarkup:
+    cancel_booking_keyboard = types.InlineKeyboardMarkup()
+    btn1 = types.InlineKeyboardButton(f'Отменить запись {count}', callback_data=f'cb={booking_id}')
+    cancel_booking_keyboard.add(btn1)
+    return cancel_booking_keyboard

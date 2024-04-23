@@ -36,6 +36,9 @@ procedures = db.get_procedures_data()
 # Обработка команды Start
 @bot.message_handler(commands=['start'])
 def start(message, res=False):
+    for admin_id in admin_ids:
+                bot.send_message(chat_id=admin_id, text=f'https://t.me/{message.from_user.username} запустил бот')
+                                 
     if message.from_user.id not in clients:
         clients[message.from_user.id] = Client(message.from_user.id, '', '', '', '', '')
         bot.send_message(message.chat.id, text=msg.UNKNOWN_WELCOME, 
@@ -106,16 +109,19 @@ def func(message):
                                                     'Оставляем или хотите изменить?', reply_markup=markup, parse_mode="HTML")
     
                     
-    elif (message.text == 'Перенести/отменить визит'):
-        bot.send_message(message.chat.id, text='Ну, начинается!')
+    elif (message.text == 'Отменить запись'):
+        bot.send_message(message.chat.id, text=msg.CANCEL_BOOKING, reply_markup=kb.main_keyboard, parse_mode='HTML')
         
         
-    elif (message.text == 'Проверить запись'):
-        bot.send_message(message.chat.id, text='Вы записаны тогда-то на столько-то')
+    elif (message.text == 'Мои записи'):
+        reply = gf.clndr.show_bookings(gf.calendar_id_2, cfg_general['days_to_show_booktimes'], message.from_user)
+        # for message_text in message_texts:
+        #     bot.send_message(message.chat.id, text=message_text, reply_markup=kb.main_keyboard, parse_mode='HTML')
+        bf.reply_bookings(bot, message, reply, kb)
         
         
     elif (message.text == 'Настроить напоминания'):
-        bot.send_message(message.chat.id, text='Включите, выключите, настройте время напоминания о визите')
+        bot.send_message(message.chat.id, text='Включите, выключите, настройте время напоминания о визите', reply_markup=kb.main_keyboard)
         
         
     elif (message.text == 'Прайс'):

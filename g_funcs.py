@@ -244,7 +244,7 @@ class Google_calendar:
                     
                     if 'бронь' in event['summary'].lower() and int(window_to_add['description']) == user_info.id or 'окно' in event['summary'].lower().strip():
                         window_to_add['summary'] = client_name + f' {price}'
-                        window_to_add['description'] = f'{phone_number}\n' + f'https://t.me/{user_info.username}\n' + db.procedure_name_from_id(procedure_id) + '\ntg'   
+                        window_to_add['description'] = f'{phone_number}\n' + f'https://t.me/{user_info.username}\n' + db.procedure_name_from_id(procedure_id) + f'\ntg {user_info.id}'   
                         window_to_add['colorId'] = window_colors['procedure']
 
                         occupied_window = self.service.events().update(calendarId=calendar_id, eventId=window_to_add['id'], body=window_to_add).execute()
@@ -290,7 +290,49 @@ class Google_calendar:
             print(f'Some fucking error happened')
             print(ex)
             return False  
-            
+    
+    def show_bookings(self, calendar_id, days_to_show_windows, from_user) -> str:
+        time_min = dt.strftime(dt.now(), '%Y-%m-%dT%H:%M:%S+03:00')
+        time_max = dt.strftime(dt.now() + timedelta(days=days_to_show_windows), '%Y-%m-%dT%H:%M:%S+03:00')
+        
+        procedures = db.get_procedures_db()
+        # procedures.append('Маникюр', 'Педикюр')
+        procedures += ['Маникюр', 'Педикюр']
+        
+        reply = {'message': None, 'bookings': None}
+        bookings = []
+        message_texts = []
+        
+        try:
+            events = self.service.events().list(calendarId=calendar_id, timeMin = time_min, timeMax = time_max, singleEvents = True).execute()
+            if events:
+                for event in events['items']:
+                    if 'description' in event and str(from_user.id) in event['description']:
+                        # procedure = list(set(procedures) & set(list(event['description'])))
+                        procedure = [procedure for procedure in procedures if procedure in event['description']][0]
+                        print(procedure)
+                        booking_start = dt.strftime(dt.strptime(event["start"]["dateTime"], '%Y-%m-%dT%H:%M:%S+03:00'), '%d.%m %H:%M')
+                        booking_id = event["id"]
+                        
+                        # message_texts.append(f'Вы записаны на <b>{procedure[0]}</b> на <b>{booking_start}</b>')
+                        bookings.append([procedure, booking_start, booking_id])
+                        
+        except Exception as ex:
+            print(f'Some fucking error happened')
+            print(ex)
+            # message_texts.append('Не удалось получить информацию. Попробуйте еще раз через 5 минут, пожалуйста')
+            reply['message'] = 'Не удалось получить информацию. Попробуйте еще раз через 5 минут, пожалуйста'
+            # return message_texts
+            return reply
+        
+        if bookings:
+            reply['bookings'] = bookings
+            return reply
+        else:
+            # message_texts.append('Активных записей не найдено')
+            reply['message'] = 'Активных записей не найдено'
+            return reply
+                
     
     def show_stats(self, calendar_id, month_shift: int):
         

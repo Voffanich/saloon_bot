@@ -15,6 +15,7 @@ import schedule
 
 import g_funcs as gf
 import ru_dates as rd
+import user_data.messages as msg
 from client import Client
 from db_handler import db
 
@@ -242,3 +243,19 @@ def window_occupied(booked_date, procedure_duration, days_in_future) -> bool:
             window_occupied = True
             
     return window_occupied
+
+def reply_bookings(bot, message, reply, kb):
+    if reply['message']:
+        bot.send_message(message.chat.id, text=reply['message'], reply_markup=kb.main_keyboard, parse_mode='HTML')
+    elif reply['bookings']:
+        count: int = 1
+        for booking in reply['bookings']:
+            message_text = f'Запись {count}\nПроцедура: <b>{booking[0]}</b>\nДата и время визита: <b>{booking[1]}</b>'
+            cancel_booking_keyboard = kb.create_cancel_booking_keyboard(booking[2], count) 
+            bot.send_message(message.chat.id, text=message_text, reply_markup=cancel_booking_keyboard, parse_mode='HTML')
+            count += 1
+            
+        bot.send_message(message.chat.id, text=msg.CHANGE_BOOKING, reply_markup=kb.main_keyboard, parse_mode='HTML')
+    else:
+        message_text = 'Что-то пошло не так. Пожалуйста, попробуйте повторить через 5 минут.'
+        bot.send_message(message.chat.id, text=message_text, reply_markup=kb.main_keyboard, parse_mode='HTML')
