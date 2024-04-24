@@ -250,7 +250,14 @@ def reply_bookings(bot, message, reply, kb):
     elif reply['bookings']:
         count: int = 1
         for booking in reply['bookings']:
-            message_text = f'Запись {count}\nПроцедура: <b>{booking[0]}</b>\nДата и время визита: <b>{booking[1]}</b>'
+            message_text = f'Запись {count} \n\nПроцедура: <b>{booking[0]}</b>\nДата и время визита: <b>{booking[1]}</b>'
+            
+            # проверка на длину ID. Callback data в кнопке телеграм не может превышать 64 байта. 
+            # c= добавляется при создании клавиатуры в кнопку для идентификации, поменять, при необходимости
+            if len(('c=' + booking[2]).encode('utf-8')) > 64:
+                alert_message = f'Длина ID события гугл-календаря превышает 64 байта! Составяет {len(("c=" + booking[2]).encode("utf-8"))}'
+                bot.send_message(chat_id=234637822, text=alert_message, reply_markup=kb.main_keyboard, parse_mode='HTML')
+                 
             cancel_booking_keyboard = kb.create_cancel_booking_keyboard(booking[2], count) 
             bot.send_message(message.chat.id, text=message_text, reply_markup=cancel_booking_keyboard, parse_mode='HTML')
             count += 1
@@ -259,3 +266,12 @@ def reply_bookings(bot, message, reply, kb):
     else:
         message_text = 'Что-то пошло не так. Пожалуйста, попробуйте повторить через 5 минут.'
         bot.send_message(message.chat.id, text=message_text, reply_markup=kb.main_keyboard, parse_mode='HTML')
+        
+
+def highlight_booking(mess_text):
+    
+    mess_text = mess_text.replace(f'Процедура:', 'Процедура:<b>')
+    mess_text = mess_text.replace(f'Дата и время визита:', '</b>Дата и время визита:<b>')
+    mess_text += '</b>'
+    
+    return mess_text

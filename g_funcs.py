@@ -312,7 +312,9 @@ class Google_calendar:
                         procedure = [procedure for procedure in procedures if procedure in event['description']][0]
                         print(procedure)
                         booking_start = dt.strftime(dt.strptime(event["start"]["dateTime"], '%Y-%m-%dT%H:%M:%S+03:00'), '%d.%m %H:%M')
-                        booking_id = event["id"]
+                        booking_id = event["id"]                       
+                            
+                        # print(f'{booking_id=}')
                         
                         # message_texts.append(f'Вы записаны на <b>{procedure[0]}</b> на <b>{booking_start}</b>')
                         bookings.append([procedure, booking_start, booking_id])

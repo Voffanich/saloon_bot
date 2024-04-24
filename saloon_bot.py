@@ -20,7 +20,7 @@ cfg_general = bf.read_config('config.json')['general']
 db.backup_db_file(cfg_general['db_file_name'], 'bot_restart')
 
 # Создание потока с задачами по расписанию, без daemon = True поток продолжает работу после завершения работы основного скрипта
-sсheduled_tasks_thread = threading.Thread(target = bf.scheduled_tasks, 
+scheduled_tasks_thread = threading.Thread(target = bf.scheduled_tasks, 
                                           kwargs = {'db_file_name':cfg_general['db_file_name'],
                                                     'days_to_store_backups':cfg_general['days_to_store_db_backups'], 
                                                     'calendar_id':gf.calendar_id_2,
@@ -37,7 +37,7 @@ procedures = db.get_procedures_data()
 @bot.message_handler(commands=['start'])
 def start(message, res=False):
     for admin_id in admin_ids:
-                bot.send_message(chat_id=admin_id, text=f'https://t.me/{message.from_user.username} запустил бот')
+        bot.send_message(chat_id=admin_id, text=f'https://t.me/{message.from_user.username} запустил бот')
                                  
     if message.from_user.id not in clients:
         clients[message.from_user.id] = Client(message.from_user.id, '', '', '', '', '')
@@ -339,12 +339,43 @@ def func(call):
         month_shift = int(call.data.split('=')[1])
         mess_text = gf.clndr.show_windows(calendar_id=gf.calendar_id_2, month_shift=month_shift)
         bot.send_message(chat_id=call.message.chat.id, text=mess_text, reply_markup=kb.admin_keyboard, parse_mode='HTML')
+    
+    # отмена записи 
+    elif call.data.startswith('c='):  
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        confirm_cancel_booking_keyboard = kb.create_confirm_cancel_booking_keyboard(call.data)
+        
+        mess_text = '<b>Вы действительно хотите отменить эту запись?</b>\n\n' + bf.highlight_booking(call.message.text)
+        
+        bot.send_message(chat_id=call.message.chat.id, text=mess_text, 
+                              reply_markup=confirm_cancel_booking_keyboard, parse_mode='HTML')
+    
+    # отмена отмены записи    
+    elif call.data.startswith('d='):
+        booking_id = call.data.replace('d=', '')
+        # count = bf.get_booking_count(call.message.text)
+        # count = call.message.text.split(' ')[1]
+        
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        
+        mess_text = call.message.text.replace('Вы действительно хотите отменить эту запись?\n\n', '')
+        count = mess_text.split(' ')[1]
+        
+        mess_text = bf.highlight_booking(mess_text)        
+        
+        cancel_booking_keyboard = kb.create_cancel_booking_keyboard(booking_id, count)
+        
+        bot.send_message(chat_id=call.message.chat.id, text=mess_text, reply_markup=cancel_booking_keyboard, parse_mode='HTML')
+        
+        
+        
+        
         
 # Запуск бота    
 # bot.polling(non_stop = True, interval = 0, timeout=0) # изучить параметры timeout! non_stop или none_stop?
 
 if __name__ == '__main__':
-    sсheduled_tasks_thread.start()
+    scheduled_tasks_thread.start()
     # try:
     #     bot.polling(non_stop = True, interval = 0, timeout = 0)
     # except:

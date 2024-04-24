@@ -106,6 +106,17 @@ def create_dates_keyboard(dates: dict) -> types.InlineKeyboardMarkup:
     
 def  create_cancel_booking_keyboard(booking_id: str, count: int) -> types.InlineKeyboardMarkup:
     cancel_booking_keyboard = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton(f'Отменить запись {count}', callback_data=f'cb={booking_id}')
+    btn1 = types.InlineKeyboardButton(f'Отменить запись {count}', callback_data=f'c={booking_id}')
     cancel_booking_keyboard.add(btn1)
+    
     return cancel_booking_keyboard
+
+def create_confirm_cancel_booking_keyboard(call_data: str) -> types.InlineKeyboardMarkup:
+    booking_id = call_data.replace('c=', '')
+    
+    confirm_cancel_booking_keyboard = types.InlineKeyboardMarkup()
+    btn1 = types.InlineKeyboardButton(f'Не отменять', callback_data=f'd={booking_id}')
+    btn2 = types.InlineKeyboardButton(f'Отменить запись', callback_data=f'k={booking_id}')
+    confirm_cancel_booking_keyboard.add(btn1, btn2)
+    
+    return confirm_cancel_booking_keyboard
