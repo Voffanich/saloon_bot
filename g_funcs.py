@@ -243,8 +243,14 @@ class Google_calendar:
                     window_to_add = event
                     
                     if 'бронь' in event['summary'].lower() and int(window_to_add['description']) == user_info.id or 'окно' in event['summary'].lower().strip():
+                        
+                        if user_info.username:
+                            user_link = f'https://t.me/{user_info.username}\n'
+                        else:
+                            user_link = ""
+                        
                         window_to_add['summary'] = client_name + f' {price}'
-                        window_to_add['description'] = f'{phone_number}\n' + f'https://t.me/{user_info.username}\n' + db.procedure_name_from_id(procedure_id) + f'\ntg {user_info.id}'   
+                        window_to_add['description'] = f'{phone_number}\n' + user_link + db.procedure_name_from_id(procedure_id) + f'\ntg {user_info.id}'   
                         window_to_add['colorId'] = window_colors['procedure']
 
                         occupied_window = self.service.events().update(calendarId=calendar_id, eventId=window_to_add['id'], body=window_to_add).execute()

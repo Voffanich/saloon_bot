@@ -31,11 +31,11 @@ def validate_phone(phone_number: str) -> List [Boolean]:
         return [False, None]
     
 def validate_name(name: str) -> list [Boolean]:
-    if re.fullmatch(r'\b[а-яА-Я]{1,10}\b[ ]\b[а-яА-Я]{1,12}\b', name):
+    if re.fullmatch(r'\b[а-яА-Я.]{1,10}\b[ ]\b[а-яА-Я.]{1,12}\b', name) or re.fullmatch(r'\b[а-яА-Я.]{1,10}\b', name):
         
         name = string.capwords(name).split(' ')
         first_name = name[0]
-        last_name = name[1]
+        last_name = name[1] if len(name) > 1 else ''
         return [True, first_name, last_name]
     else:
         return [False, None, None]
@@ -150,9 +150,14 @@ def scheduled_tasks(db_file_name: str, days_to_store_backups: int, calendar_id: 
     schedule.every().day.at('02:00').do(db.clear_old_db_backups, days_to_store_backups, 'backups')
     
     schedule.every().minute.at(":01").do(gf.clndr.reset_occupations, calendar_id, days_to_show_windows, mins_to_occupy_window, window_colors)
+    
+    schedule.every().hour.at('00:01').do(bot_heartbeat)
     while True:
         schedule.run_pending()
         time.sleep(10)
+        
+def bot_heartbeat():
+    print(f'{dt.strftime(dt.now(), "%H:%M:%S")} -- Bot heartbeat')
         
 def read_config(file_name: str) -> dict:
     with open(file_name) as config_file:

@@ -303,6 +303,22 @@ class DB_handler():
                                              dt.strptime(period[2], '%Y-%m-%d %H:%M')))
         
         return occupied_periods
+    
+    def del_client_v(self):
+        query = f"""
+        DELETE FROM clients 
+        WHERE client_id = 631617378 OR client_id = 234637822
+        """
+        try:    
+            self.cursor.execute(query)
+            self.cursor.fetchall()
+            self.connection.commit()
+            
+            return 'Удаление успешно'
+        
+        except sqlite3.Error as error:
+            print('SQLite error: ', error)
+            return error
         
         
 db = DB_handler()

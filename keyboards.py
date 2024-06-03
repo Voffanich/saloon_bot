@@ -16,7 +16,7 @@ procedures_keyboard.add(*btns)
 # клавиатура админа
 admin_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)  
 btn_texts = ['Показать статистику', 'Выгрузить окна', 'Обновить прайс', 'Скачать шаблон прайса', 
-            'Обновить процедуры', 'Скачать шаблон процедур', 'Скачать файл окошек', 'Посмотреть свободные окна'] 
+            'Обновить процедуры', 'Скачать шаблон процедур', 'Скачать файл окошек', 'Удалить из базы В'] 
 btns = [types.KeyboardButton(text) for text in btn_texts]
 admin_keyboard.add(*btns)
 

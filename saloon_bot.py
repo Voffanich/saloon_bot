@@ -92,7 +92,7 @@ def func(message):
             
     
     elif (message.text == 'Записаться'):
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         
         # clients[message.from_user.id].username = message.from_user.username
         # clients[message.from_user.id].first_name = message.from_user.first_name
@@ -103,10 +103,14 @@ def func(message):
         else:
             btn1 = types.KeyboardButton("Оставляем")
             btn2 = types.KeyboardButton("Изменить имя")
-            markup.add(btn1, btn2)
-            bot.send_message(message.chat.id, text='Вы не знакомы боту) Давайте-ка занесем вас в базу клиентов. '
-                                                    f'В телеграме вы подписаны как <b>{message.from_user.first_name} {message.from_user.last_name}</b>. '
-                                                    'Оставляем или хотите изменить?', reply_markup=markup, parse_mode="HTML")
+            btn3 = types.KeyboardButton("Не регистрироваться")
+            markup.row(btn1, btn2)
+            markup.row(btn3)
+            bot.send_message(message.chat.id, text=f"""Вы не знакомы боту) Давайте-ка занесем вас в базу клиентов. В дальнейшем это упростит Вашу запись к мастеру, а  
+                                                    мастеру позволит связаться с вами, вести статистику визитов, видет информацию о клиенте. Но можно и не регистрироваться.
+                                                    
+                                                    В телеграме вы подписаны как <b>{message.from_user.first_name} {message.from_user.last_name}</b>. 
+                                                    Оставляем или хотите изменить?""".replace('\n', ''), reply_markup=markup, parse_mode="HTML")
     
                     
     elif (message.text == 'Отменить запись'):
@@ -166,7 +170,18 @@ def func(message):
         bot.send_message(message.chat.id, text=f'Чудненько, сохранили вас в базе клиентов как <b>{clients[message.from_user.id].first_name} {clients[message.from_user.id].last_name}, {clients[message.from_user.id].phone_number}</b>. Теперь можете выбрать процедуру, на которую хотели бы прийти', reply_markup=kb.procedures_keyboard, parse_mode='HTML')
         db.add_client(message.from_user.id, message.from_user.username, clients[message.from_user.id].first_name, clients[message.from_user.id].last_name, clients[message.from_user.id].phone_number)        
         clients[message.from_user.id].flag = 'выбор процедуры'
-        
+    
+    
+    elif (message.text == 'Не регистрироваться'):
+        bot.send_message(message.chat.id, text=f'Чудненько, сохраним вас в базе без контактных данных. Теперь можете выбрать процедуру, на которую хотели бы прийти', reply_markup=kb.procedures_keyboard, parse_mode='HTML')
+        first_name = message.from_user.first_name
+        last_name = message.from_user.last_name
+        phone_number = 'NULL'
+        db.add_client(message.from_user.id, message.from_user.username, first_name, last_name, phone_number)        
+        clients[message.from_user.id].flag = 'выбор процедуры'
+        clients[message.from_user.id].first_name = first_name
+        clients[message.from_user.id].last_name = last_name
+        clients[message.from_user.id].phone_number = ''
         
     elif (message.text.lower() == 'admino' or message.text.lower() == 'админо'):                
         if message.from_user.username in admin_usernames:
@@ -185,7 +200,12 @@ def func(message):
          
     elif (message.text == 'Выгрузить окна'):
         bot.send_message(message.chat.id, text='Выберите месяц для отображения свободных для записи окон', reply_markup=kb.main_windows_keyboard) 
-            
+    
+    elif (message.text == 'Удалить из базы В'):
+        mess_text = db.del_client_v()
+        bot.send_message(message.chat.id, text=mess_text, reply_markup=kb.main_keyboard)
+        clients[message.from_user.id].admin = False 
+        
     else:
         bot.send_message(message.chat.id, text=msg.UNKNOWN_COMMAND)
 
