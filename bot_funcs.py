@@ -31,7 +31,8 @@ def validate_phone(phone_number: str) -> List [Boolean]:
         return [False, None]
     
 def validate_name(name: str) -> list [Boolean]:
-    if re.fullmatch(r'\b[а-яА-Я.]{1,10}\b[ ]\b[а-яА-Я.]{1,12}\b', name) or re.fullmatch(r'\b[а-яА-Я.]{1,10}\b', name):
+    if re.fullmatch(r'([а-яА-Я]{1,12})\.?\s+([а-яА-Я]{1,12})\.?', name) or re.fullmatch(r'[а-яА-Я]{1,10}\.?', name):
+    #if re.fullmatch(r'\b[а-яА-Я]{1,10}\.?\b[ ]\b[а-яА-Я]{1,12}\.?\b', name) or re.fullmatch(r'\b[а-яА-Я]{1,10}\.?\b', name):
         
         name = string.capwords(name).split(' ')
         first_name = name[0]

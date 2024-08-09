@@ -188,8 +188,7 @@ def func(message):
             bot.send_message(message.chat.id, text='Привет, админ!', reply_markup=kb.admin_keyboard)
             clients[message.from_user.id].admin = True
         else:
-            bot.send_message(message.chat.id, text='К такому меня жизнь не готовила) Если что-то не получается, пользуйтесь, пожалуйста, кнопками меню бота', reply_markup=kb.main_keyboard)
-    
+            bot.send_message(message.chat.id, text=msg.UNKNOWN_COMMAND, reply_markup=kb.main_keyboard)
     
     elif (message.text.lower() == 'admino stop' or message.text.lower() == 'stop admino' or message.text.lower() == 'админо стоп' or message.text.lower() == 'стоп админо'):
         clients[message.from_user.id].admin = False      
