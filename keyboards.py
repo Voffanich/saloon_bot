@@ -39,7 +39,8 @@ main_stats_keyboard.add(btn1, btn2, btn3)
 main_windows_keyboard = types.InlineKeyboardMarkup()
 btn1 = types.InlineKeyboardButton('Текущий', callback_data=f'windows_shift=0')
 btn2 = types.InlineKeyboardButton('Следующий', callback_data=f'windows_shift=1')
-main_windows_keyboard.add(btn1, btn2)
+btn3 = types.InlineKeyboardButton('Через один', callback_data=f'windows_shift=2')
+main_windows_keyboard.add(btn1, btn2, btn3)
 
 # клавиатура подтверждения записи на выбранную дату и время
 def create_confirm_book_keyboard(procedures: list, procedure_id: int, booked_date: str) -> types.InlineKeyboardMarkup:

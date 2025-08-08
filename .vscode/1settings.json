@@ -1,0 +1,5 @@
+{
+    "tasks.startup": [
+      "Run saloon_bot.py",
+    ]
+  }

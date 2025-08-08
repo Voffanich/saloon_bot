@@ -317,7 +317,7 @@ def func(call):
         # procedure = bf.procedure_name_from_id(procedures, procedure_id)
         
         # client_name = clients[call.from_user.id].first_name or '' + ' ' +  clients[call.from_user.id].last_name or ''
-        client_name = clients[call.from_user.id].first_name + ' ' +  clients[call.from_user.id].last_name or ''
+        client_name = clients[call.from_user.id].first_name or ' ' + ' ' +  clients[call.from_user.id].last_name or ' '
         phone_number = clients[call.from_user.id].phone_number
        
         price = int(procedures[procedure_id - 1]['price'])

@@ -1,0 +1,6 @@
+{
+    "маникюр":{"av_price":61,"timing":90},
+    "педикюр":{"av_price":68,"timing":60},
+    "подология":{"av_price":50,"timing":40},
+    "другое":{"av_price":40,"timing":90}
+}

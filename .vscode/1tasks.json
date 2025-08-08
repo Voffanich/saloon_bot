@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run saloon_bot.py",
+      "type": "shell",
+      "command": "python saloon_bot.py",
+      "presentation": {
+        "panel": "new",
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    }
+  ]
+} 
