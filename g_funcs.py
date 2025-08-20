@@ -6,6 +6,7 @@ import time
 from datetime import datetime as dt
 from datetime import timedelta
 from pathlib import Path
+import json
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -224,11 +225,8 @@ class Google_calendar:
         except Exception as ex:
             print(f'Some fucking error happened')
             print(ex)
-            return False
+            return False  
         
-        
-    
-    
     def add_visit(self, calendar_id, booked_date, user_info, procedure_id, client_name, phone_number, price, window_colors) -> bool:
         
         time_min = dt.strftime(booked_date, '%Y-%m-%dT%H:%M:%S+03:00')
@@ -296,7 +294,7 @@ class Google_calendar:
             print(f'Some fucking error happened')
             print(ex)
             return False  
-    
+        
     def show_bookings(self, calendar_id, days_to_show_windows, from_user) -> str:
         time_min = dt.strftime(dt.now(), '%Y-%m-%dT%H:%M:%S+03:00')
         time_max = dt.strftime(dt.now() + timedelta(days=days_to_show_windows), '%Y-%m-%dT%H:%M:%S+03:00')
@@ -321,7 +319,6 @@ class Google_calendar:
                         booking_id = event["id"]                       
                             
                         # print(f'{booking_id=}')
-                        
                         # message_texts.append(f'Вы записаны на <b>{procedure[0]}</b> на <b>{booking_start}</b>')
                         bookings.append([procedure, booking_start, booking_id])
                         
@@ -340,9 +337,8 @@ class Google_calendar:
             # message_texts.append('Активных записей не найдено')
             reply['message'] = 'Активных записей не найдено'
             return reply
-                
-    
-    def show_stats(self, calendar_id, month_shift: int):
+        
+    def show_stats_legacy(self, calendar_id, month_shift: int):
         
         month_num = int(dt.strftime(dt.now(), "%m")) + month_shift
         
@@ -490,6 +486,178 @@ class Google_calendar:
         return message_text
         # return total_bookings, remained_bookings
     
+    def show_stats(self, calendar_id, month_shift: int):
+        # Determine target month/year based on shift
+        month_num = int(dt.strftime(dt.now(), "%m")) + month_shift
+        current_year = int(dt.strftime(dt.now(), "%Y"))
+        target_year = current_year
+        if month_num > 12:
+            month_num = month_num - 12
+            target_year = current_year + 1
+            print(f'{target_year=} {month_num=}')
+        elif month_num < 1:
+            month_num = month_num + 12
+            target_year = current_year - 1
+            print(f'{target_year=} {month_num=}')
+        else:
+            print(f'{target_year=} {month_num=}')
+
+        ru_month_name = rd.ru_m_full(month_num=month_num)
+
+        days_in_month = calendar.monthrange(target_year, month_num)
+
+        time_min = f'{target_year}-{"0" if month_num < 10 else ""}{month_num}-01T00:00:00+03:00'
+        time_max = f'{target_year}-{"0" if month_num < 10 else ""}{month_num}-{days_in_month[-1]}T23:59:59+03:00'
+
+        print(f'time_min={time_min}')
+        print(f'time_max={time_max}')
+
+        # Load procedures from JSON config
+        try:
+            with open('procedures.json', encoding='utf-8') as f:
+                procedures_conf = json.load(f)
+        except Exception as ex:
+            print(ex)
+            # Fallback to legacy behavior if config cannot be read
+            return self.show_stats_legacy(calendar_id, month_shift)
+
+        procedure_names = list(procedures_conf.keys())  # names are expected in lowercase in JSON
+
+        # Initialize counters
+        windows = 0
+        proc_counts = {name: 0 for name in procedure_names}  # all visits in the month
+        proc_stats = {name: {'total_count': 0, 'priced_count': 0, 'sum': 0} for name in procedure_names}  # finished visits
+
+        events = self.service.events().list(calendarId=calendar_id, timeMin=time_min, timeMax=time_max, singleEvents=True).execute()
+
+        for item in events['items']:
+            # Count future windows remaining in this month
+            if 'summary' in item:
+                if 'окно' in item['summary'].lower().strip():
+                    try:
+                        start_dt = dt.strptime(item['start']['dateTime'].split('+')[0], '%Y-%m-%dT%H:%M:%S')
+                        if start_dt > dt.now():
+                            windows += 1
+                    except Exception:
+                        pass
+
+            # Detect procedures in descriptions according to JSON list
+            if 'description' in item and item['description']:
+                description_l = item['description'].lower()
+                for name in procedure_names:
+                    if name in description_l:
+                        proc_counts[name] += 1
+                        try:
+                            end_dt = dt.strptime(item['end']['dateTime'].split('+')[0], '%Y-%m-%dT%H:%M:%S')
+                        except Exception:
+                            end_dt = None
+                        if end_dt and end_dt < dt.now() and 'summary' in item:
+                            proc_stats[name]['total_count'] += 1
+                            check = re.findall(r'\b\d{1,3}\b', item['summary'])
+                            if check:
+                                proc_stats[name]['priced_count'] += 1
+                                proc_stats[name]['sum'] += int(check[0])
+
+        # Determine pricing mode for expected income
+        is_current_month = (target_year == current_year and month_num == int(dt.strftime(dt.now(), "%m")))
+        is_previous_month = month_shift < 0
+        is_future_month = month_shift > 0
+        before_or_on_15 = dt.now().day <= 15
+
+        # Build message preserving original formatting
+        try:
+            message_text = f"""
+    Статистика за <b>{ru_month_name.capitalize()}</b>        
+
+    Оценка заработка за весь месяц:        
+    """
+
+            total_visits_for_lines = 0
+            expected_total_income = 0.0
+
+            for name in procedure_names:
+                conf_price = procedures_conf[name].get('av_price', 0)
+                stats = proc_stats[name]
+                count_in_month = proc_counts.get(name, 0)
+
+                # Hide zero-count procedures
+                if is_previous_month:
+                    count_for_line = stats['total_count']
+                    if count_for_line == 0:
+                        continue
+                    blanc_sum = (stats['total_count'] - stats['priced_count']) * conf_price
+                    effective_total_income_proc = stats['sum'] + blanc_sum
+                    expected_price = effective_total_income_proc / stats['total_count']
+                    expected_total_income += effective_total_income_proc
+                elif is_current_month:
+                    count_for_line = count_in_month
+                    if count_for_line == 0:
+                        continue
+                    if before_or_on_15:
+                        expected_price = conf_price
+                    else:
+                        if stats['priced_count'] > 0:
+                            expected_price = stats['sum'] / stats['priced_count']
+                        else:
+                            expected_price = conf_price
+                    expected_total_income += count_for_line * expected_price
+                else:  # future months
+                    count_for_line = count_in_month
+                    if count_for_line == 0:
+                        continue
+                    expected_price = conf_price
+                    expected_total_income += count_for_line * expected_price
+
+                total_visits_for_lines += count_for_line
+                message_text += f"\n    {name.capitalize()}: <b>{count_for_line}</b> визитов х {round(expected_price, 2)} р."
+
+            message_text += f"\n\n    Доход со всех <b>{total_visits_for_lines}</b> визитов <b>{round(expected_total_income, 2)} р.</b>\n    "
+
+            # Actual earnings section only for current and previous months
+            if month_shift < 1:
+                any_finished = any(stats['total_count'] > 0 for stats in proc_stats.values())
+                if any_finished:
+                    message_text += f"""
+    Фактический заработок на данный момент:
+    """
+
+                    total_finished_for_avg = 0
+                    total_income_for_avg = 0.0
+                    total_income = 0.0
+
+                    for name in procedure_names:
+                        stats = proc_stats[name]
+                        if stats['total_count'] > 0:
+                            if stats['priced_count'] > 0:
+                                avg_check = stats['sum'] / stats['priced_count']
+                            else:
+                                avg_check = procedures_conf[name].get('av_price', 0)
+
+                            message_text += f"\n    Средний чек за {name}: <b>{round(avg_check, 2)} р.</b> (процедур: {stats['total_count']})"
+
+                            conf_price = procedures_conf[name].get('av_price', 0)
+                            blanc_sum = (stats['total_count'] - stats['priced_count']) * conf_price
+                            total_income += stats['sum'] + blanc_sum
+                            if name != 'другое':
+                                total_income_for_avg += stats['sum'] + blanc_sum
+                                total_finished_for_avg += stats['total_count']
+
+                    if total_finished_for_avg > 0:
+                        overall_avg = total_income_for_avg / total_finished_for_avg
+                        message_text += f"\n\n    Cредний чек за процедуру: <b>{round(overall_avg, 2)} р.</b> (процедур: {total_finished_for_avg})"
+                    message_text += f"\n    Всего заработано: <b>{round(total_income, 2)} р.</b>\n            "
+
+            message_text += f"""
+    Свободных окон до конца месяца - {windows}
+            """
+
+        except Exception as ex:
+            print(ex)
+
+        print(message_text)
+        return message_text
+        # end show_stats
+    
     
     def place_windows(self, calendar_id: str, window_duration: str, mode: str, days_off: list, work_day_start: str, work_day_finish: str, period_start: str,
                       period_finish: str, window_colors: dict, events_gap: int, events_shift: int):
@@ -604,20 +772,20 @@ calendar_id_2 = 'kazlova.alesia@gmail.com'
 
 # pprint.pprint(clndr.get_calendar_list())
 
-event = {
-        'summary':'Аня Дубик',
-        # 'location': 'Минск',
-        'description': 'маникюр',
-        'start': {
-            'dateTime': '2022-11-28T15:00:00Z',
-            'timeZone': 'Europe/Minsk' 
-        },
-        'end': {
-            'dateTime': '2022-11-28T16:00:00Z',
-            'timeZone': 'Europe/Minsk' 
-        },      
-        'colorId':'7'                 
-        }  
+# event = {
+#         'summary':'Аня Дубик',
+#         # 'location': 'Минск',
+#         'description': 'маникюр',
+#         'start': {
+#             'dateTime': '2022-11-28T15:00:00Z',
+#             'timeZone': 'Europe/Minsk' 
+#         },
+#         'end': {
+#             'dateTime': '2022-11-28T16:00:00Z',
+#             'timeZone': 'Europe/Minsk' 
+#         },      
+#         'colorId':'7'                 
+#         }  
 
 # event = clndr.add_event(calendar_id=calendar_id, event=event)
 
