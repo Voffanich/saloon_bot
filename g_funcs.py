@@ -638,7 +638,7 @@ class Google_calendar:
                             conf_price = procedures_conf[name].get('av_price', 0)
                             blanc_sum = (stats['total_count'] - stats['priced_count']) * conf_price
                             total_income += stats['sum'] + blanc_sum
-                            if name != 'другое':
+                            if name not in ('другое', 'реализация'):
                                 total_income_for_avg += stats['sum'] + blanc_sum
                                 total_finished_for_avg += stats['total_count']
 
@@ -657,6 +657,101 @@ class Google_calendar:
         print(message_text)
         return message_text
         # end show_stats
+
+    def _load_procedures_json(self) -> dict:
+        with open('procedures.json', encoding='utf-8') as f:
+            return json.load(f)
+
+    def _write_procedures_json(self, data: dict) -> None:
+        with open('procedures.json', 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+
+    def compute_last_month_avgs(self, calendar_id) -> dict:
+        """Returns dict {procedure_name: average_price or None} for previous month."""
+        # Determine previous month/year
+        now = dt.now()
+        prev_month = now.month - 1
+        year = now.year
+        if prev_month == 0:
+            prev_month = 12
+            year -= 1
+
+        days_in_prev = calendar.monthrange(year, prev_month)
+        time_min = f'{year}-{"0" if prev_month < 10 else ""}{prev_month}-01T00:00:00+03:00'
+        time_max = f'{year}-{"0" if prev_month < 10 else ""}{prev_month}-{days_in_prev[-1]}T23:59:59+03:00'
+
+        try:
+            procedures_conf = self._load_procedures_json()
+        except Exception as ex:
+            print(ex)
+            return {}
+
+        names = list(procedures_conf.keys())
+        stats = {n: {'priced_count': 0, 'sum': 0, 'total_count': 0} for n in names}
+
+        try:
+            events = self.service.events().list(calendarId=calendar_id, timeMin=time_min, timeMax=time_max, singleEvents=True).execute()
+        except Exception as ex:
+            print(ex)
+            return {}
+
+        for item in events.get('items', []):
+            if 'description' not in item or not item['description']:
+                continue
+            descr = item['description'].lower()
+            for name in names:
+                if name in descr:
+                    stats[name]['total_count'] += 1
+                    if 'summary' in item:
+                        check = re.findall(r'\b\d{1,3}\b', item['summary'])
+                        if check:
+                            stats[name]['priced_count'] += 1
+                            stats[name]['sum'] += int(check[0])
+
+        avgs = {}
+        for name, s in stats.items():
+            if s['priced_count'] > 0:
+                avgs[name] = s['sum'] / s['priced_count']
+            else:
+                avgs[name] = None
+        return avgs
+
+    def update_av_prices_if_first_day(self, calendar_id) -> None:
+        """On the first day of month, overwrite av_price in procedures.json with last month's averages when available."""
+        if dt.now().day != 1:
+            return
+        try:
+            procedures_conf = self._load_procedures_json()
+        except Exception as ex:
+            print(ex)
+            return
+        avgs = self.compute_last_month_avgs(calendar_id)
+        changed = False
+        for name, avg in avgs.items():
+            if avg is not None:
+                if round(procedures_conf.get(name, {}).get('av_price', 0), 2) != round(avg, 2):
+                    if name in procedures_conf:
+                        procedures_conf[name]['av_price'] = round(avg, 2)
+                        changed = True
+        if changed:
+            self._write_procedures_json(procedures_conf)
+
+    def sync_av_prices_with_last_month_on_startup(self, calendar_id) -> None:
+        """Run once on startup: align av_price with last month's averages when they differ."""
+        try:
+            procedures_conf = self._load_procedures_json()
+        except Exception as ex:
+            print(ex)
+            return
+        avgs = self.compute_last_month_avgs(calendar_id)
+        changed = False
+        for name, avg in avgs.items():
+            if avg is not None and name in procedures_conf:
+                if round(procedures_conf[name].get('av_price', 0), 2) != round(avg, 2):
+                    procedures_conf[name]['av_price'] = round(avg, 2)
+                    changed = True
+        if changed:
+            self._write_procedures_json(procedures_conf)
     
     
     def place_windows(self, calendar_id: str, window_duration: str, mode: str, days_off: list, work_day_start: str, work_day_finish: str, period_start: str,

@@ -394,6 +394,12 @@ def func(call):
 # bot.polling(non_stop = True, interval = 0, timeout=0) # изучить параметры timeout! non_stop или none_stop?
 
 if __name__ == '__main__':
+    # One-time sync of av_price with last month's averages on startup
+    try:
+        gf.clndr.sync_av_prices_with_last_month_on_startup(gf.calendar_id_2)
+    except Exception as ex:
+        print(ex)
+    
     scheduled_tasks_thread.start()
     # try:
     #     bot.polling(non_stop = True, interval = 0, timeout = 0)

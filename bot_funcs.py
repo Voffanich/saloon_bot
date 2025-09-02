@@ -152,6 +152,9 @@ def scheduled_tasks(db_file_name: str, days_to_store_backups: int, calendar_id: 
     
     schedule.every().minute.at(":01").do(gf.clndr.reset_occupations, calendar_id, days_to_show_windows, mins_to_occupy_window, window_colors)
     
+    # Update av_price in procedures.json at the start of each month based on last month's averages
+    schedule.every().day.at('00:10').do(gf.clndr.update_av_prices_if_first_day, calendar_id)
+    
     schedule.every().hour.at('00:01').do(bot_heartbeat)
     while True:
         schedule.run_pending()
