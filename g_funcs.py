@@ -558,6 +558,49 @@ class Google_calendar:
                                 proc_stats[name]['priced_count'] += 1
                                 proc_stats[name]['sum'] += int(check[0])
 
+        # ===== Расчёт отработанных часов за период =====
+        # Визиты: завершённые события календаря, в description которых есть название процедуры из procedures.json
+        raw_day_visits = {}
+        for item in events['items']:
+            if not ('description' in item and item['description']):
+                continue
+            descr_l = item['description'].lower()
+            matched = next((name for name in procedure_names if name in descr_l), None)
+            if not matched:
+                continue
+            try:
+                start_dt = dt.strptime(item['start']['dateTime'].split('+')[0], '%Y-%m-%dT%H:%M:%S')
+                end_dt = dt.strptime(item['end']['dateTime'].split('+')[0], '%Y-%m-%dT%H:%M:%S')
+            except Exception:
+                continue
+            if end_dt > dt.now():
+                continue
+            price = None
+            if 'summary' in item:
+                check = re.findall(r'\b\d{1,3}\b', item['summary'])
+                if check:
+                    price = int(check[0])
+            if price is None:
+                price = procedures_conf.get(matched, {}).get('av_price', 0)
+            day_key = start_dt.strftime('%Y-%m-%d')
+            raw_day_visits.setdefault(day_key, []).append((start_dt, end_dt, price))
+
+        work_minutes_total = 0.0
+        clean_minutes_total = 0.0
+        work_income = 0.0
+        work_days = 0
+        for day, day_visits in raw_day_visits.items():
+            day_visits.sort()
+            day_span = (day_visits[-1][1] - day_visits[0][0]).total_seconds() / 60.0
+            for prev, nxt in zip(day_visits, day_visits[1:]):
+                gap = (nxt[0] - prev[1]).total_seconds() / 60.0
+                if gap > 60:
+                    day_span -= gap
+            work_minutes_total += max(day_span, 0)
+            clean_minutes_total += sum((visit[1] - visit[0]).total_seconds() / 60.0 for visit in day_visits)
+            work_days += 1
+            work_income += sum(visit[2] for visit in day_visits)
+
         # Determine pricing mode for expected income
         is_current_month = (target_year == current_year and month_num == int(dt.strftime(dt.now(), "%m")))
         is_previous_month = month_shift < 0
@@ -649,6 +692,32 @@ class Google_calendar:
 
             message_text += f"""
     Свободных окон до конца месяца - {windows}
+            """
+
+            # Отработанные часы за период (для прошедшего/текущего месяца)
+            if month_shift <= 0 and work_days > 0:
+                work_hours_total = int(round(work_minutes_total)) // 60
+                work_minutes_rest = int(round(work_minutes_total)) % 60
+                avg_minutes = int(round(work_minutes_total / work_days))
+                avg_hours = avg_minutes // 60
+                avg_minutes_rest = avg_minutes % 60
+                income_per_day = round(work_income / work_days, 2)
+                income_per_hour = round(work_income / (work_minutes_total / 60), 2) if work_minutes_total > 0 else 0
+                income_per_clean_hour = round(work_income / (clean_minutes_total / 60), 2) if clean_minutes_total > 0 else 0
+
+                period_note = ''
+                if month_shift == 0:
+                    period_note = ' (по прошедшей части месяца)'
+
+                message_text += f"""
+    Отработано{period_note}:
+
+    Рабочих дней: <b>{work_days}</b>
+    Рабочих часов: <b>{work_hours_total} ч {work_minutes_rest:02d} мин</b>
+    В среднем в день: <b>{avg_hours} ч {avg_minutes_rest:02d} мин</b>
+    Заработано за рабочий день: <b>{income_per_day} р.</b>
+    Заработано за час: <b>{income_per_hour} р.</b>
+    Заработано за чистый час: <b>{income_per_clean_hour} р.</b>
             """
 
         except Exception as ex:
