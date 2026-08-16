@@ -698,6 +698,8 @@ class Google_calendar:
             if month_shift <= 0 and work_days > 0:
                 work_hours_total = int(round(work_minutes_total)) // 60
                 work_minutes_rest = int(round(work_minutes_total)) % 60
+                clean_hours_total = int(round(clean_minutes_total)) // 60
+                clean_minutes_rest = int(round(clean_minutes_total)) % 60
                 avg_minutes = int(round(work_minutes_total / work_days))
                 avg_hours = avg_minutes // 60
                 avg_minutes_rest = avg_minutes % 60
@@ -714,6 +716,7 @@ class Google_calendar:
 
     Рабочих дней: <b>{work_days}</b>
     Рабочих часов: <b>{work_hours_total} ч {work_minutes_rest:02d} мин</b>
+    Чистых рабочих часов: <b>{clean_hours_total} ч {clean_minutes_rest:02d} мин</b>
     В среднем в день: <b>{avg_hours} ч {avg_minutes_rest:02d} мин</b>
     Заработано за рабочий день: <b>{income_per_day} р.</b>
     Заработано за час: <b>{income_per_hour} р.</b>
