@@ -1,6 +1,9 @@
 import threading
+import time as _time
 from datetime import datetime as dt
 from datetime import timedelta
+
+import requests
 
 import telebot
 from telebot import types
@@ -401,11 +404,48 @@ if __name__ == '__main__':
         print(ex)
     
     scheduled_tasks_thread.start()
-    # try:
-    #     bot.polling(non_stop = True, interval = 0, timeout = 0)
-    # except:
-    #     pass
-    bot.infinity_polling()
+    
+    # Запуск опроса Telegram с автопереподключением и логированием разрывов в терминал.
+    # Каждое падение/разрыв пишется в консоль с причиной, после чего бот ждёт и переподключается.
+    last_update_id = 0
+    consecutive_failures = 0
+    initial_backoff = 3        # первичная пауза после разрыва, сек
+    max_backoff = 60           # максимальная пауза между попытками, сек
+    backoff = initial_backoff
+    
+    while True:
+        try:
+            offset = last_update_id + 1
+            updates = bot.get_updates(offset=offset, timeout=30)
+        except KeyboardInterrupt:
+            print(f'[{dt.strftime(dt.now(), "%H:%M:%S")}] Бот остановлен вручную (Ctrl+C)')
+            break
+        except Exception as ex:
+            consecutive_failures += 1
+            reason = getattr(ex, '__cause__', ex) or ex
+            print(f'[{dt.strftime(dt.now(), "%H:%M:%S")}] ОШИБКА соединения с Telegram '
+                  f'(попытка #{consecutive_failures}): {type(reason).__name__}: {reason}')
+            print(f'    Пауза {backoff} с перед повторной попыткой...', flush=True)
+            _time.sleep(backoff)
+            backoff = min(backoff * 2, max_backoff)
+            continue
+        
+        # соединение восстановлено (или первая успешная итерация)
+        if consecutive_failures > 0:
+            print(f'[{dt.strftime(dt.now(), "%H:%M:%S")}] Соединение восстановлено '
+                  f'(пережито разрывов: {consecutive_failures})', flush=True)
+        consecutive_failures = 0
+        backoff = initial_backoff
+        
+        # обработка полученных апдейтов
+        try:
+            bot.process_new_updates(updates)
+        except Exception as ex:
+            print(f'[{dt.strftime(dt.now(), "%H:%M:%S")}] Ошибка обработки update: '
+                  f'{type(ex).__name__}: {ex}', flush=True)
+        
+        for update in updates:
+            last_update_id = max(last_update_id, update.update_id)
     
     
     # .\venv\scripts\activate.ps1 
